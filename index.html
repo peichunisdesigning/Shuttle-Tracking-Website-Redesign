@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Shuttle Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --maroon-900: #4A0F22; --maroon-800: #6B1730; --maroon-700: #8C1D40;
+    --maroon-600: #A63258; --maroon-500: #C24E76;
+    --maroon-100: #F6E3EA; --maroon-50: #FBF3F6;
+    --gold-700: #B8860B; --gold-600: #D4A017; --gold-500: #F1C232;
+    --gold-300: #F8DD7A; --gold-100: #FBEFC1;
+    --campus-tempe: #8C1D40; --campus-poly: #C75B12;
+    --campus-downtown: #1F6FB2; --campus-west: #2E7D5B;
+    --ink-900: #18171A; --ink-800: #2A282D; --ink-700: #4A4750;
+    --ink-500: #7A7780; --ink-400: #A8A4AE; --ink-300: #CFCBD4;
+    --ink-200: #E6E3EA; --ink-100: #F2F0F4; --ink-50: #FAF8FB;
+    --success: #2E8B57; --warning: #D49A1A; --danger: #C13B3B; --info: #1F6FB2;
+    --shadow-1: 0 1px 2px rgba(24,23,26,.06);
+    --shadow-2: 0 2px 8px rgba(24,23,26,.08), 0 4px 14px rgba(24,23,26,.06);
+    --shadow-3: 0 12px 32px rgba(24,23,26,.14);
+    --shadow-maroon: 0 6px 18px rgba(140,29,64,.28);
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --header-h: 56px;
+    --header-h-desktop: 68px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: var(--font-sans);
+    background: var(--ink-100);
+    color: var(--ink-900);
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+  }
+  button { font-family: inherit; border: 0; background: none; cursor: pointer; padding: 0; color: inherit; }
+  a { color: inherit; text-decoration: none; }
+
+  /* ───── Mobile-first website shell ───── */
+  .app {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex; flex-direction: column;
+    background: var(--ink-50);
+    position: relative;
+  }
+
+  /* ───── Top header ───── */
+  .header {
+    height: var(--header-h);
+    background: var(--maroon-700);
+    color: #fff;
+    padding: 0 16px;
+    display: flex; align-items: center; gap: 12px;
+    position: sticky; top: 0; z-index: 40;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  }
+  .header-menu {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; color: #fff;
+    transition: background .15s;
+  }
+  .header-menu:hover, .header-menu:active { background: rgba(255,255,255,.14); }
+
+  /* ───── Primary Home/Map switcher (2 tabs) ───── */
+  .primary-switch {
+    display: flex;
+    background: rgba(255,255,255,.12);
+    border-radius: 999px;
+    padding: 4px;
+    gap: 2px;
+  }
+  .primary-switch-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    color: rgba(255,255,255,.75);
+    font-size: 13px; font-weight: 600;
+    transition: background .15s, color .15s;
+    white-space: nowrap;
+  }
+  .primary-switch-btn.active {
+    background: var(--gold-500);
+    color: var(--maroon-900);
+    box-shadow: 0 2px 6px rgba(0,0,0,.18);
+  }
+  .primary-switch-btn:hover:not(.active) { background: rgba(255,255,255,.1); color: #fff; }
+  .more-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    transition: background .15s;
+    position: relative;
+  }
+  .more-btn:hover, .more-btn:active { background: rgba(255,255,255,.14); }
+  .more-menu {
+    position: absolute;
+    top: calc(100% + 8px); right: 0;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: var(--shadow-3);
+    min-width: 200px;
+    overflow: hidden;
+    z-index: 60;
+    opacity: 0; transform: translateY(-6px);
+    pointer-events: none;
+    transition: opacity .15s, transform .15s;
+  }
+  .more-menu.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .more-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+    width: 100%;
+    text-align: left;
+    color: var(--ink-800);
+    font-size: 14px; font-weight: 500;
+    transition: background .15s;
+  }
+  .more-item:hover, .more-item:active { background: var(--ink-100); }
+  .more-item.active { background: var(--maroon-50); color: var(--maroon-700); font-weight: 600; }
+  .more-item svg { color: var(--ink-500); flex-shrink: 0; }
+  .more-item.active svg { color: var(--maroon-700); }
+  .header-mark {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--gold-500); color: var(--maroon-900);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .header-title {
+    font-weight: 700; font-size: 16px; letter-spacing: -0.01em;
+    flex: 1; min-width: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .header-back {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+  }
+  .header-back:hover, .header-back:active { background: rgba(255,255,255,.14); }
+  .header-icon-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    transition: background .15s;
+  }
+  .header-icon-btn:hover, .header-icon-btn:active { background: rgba(255,255,255,.14); }
+  .refresh-btn { transition: transform .6s ease; }
+  .refresh-btn.spinning { transform: rotate(360deg); }
+  .last-updated {
+    font-family: var(--font-mono); font-size: 10px;
+    color: rgba(255,255,255,.7); letter-spacing: .04em;
+    white-space: nowrap;
+  }
+
+  /* ───── Page area ───── */
+  .page {
+    flex: 1;
+    padding-bottom: 24px;
+    overflow-x: hidden;
+  }
+  .page.hidden { display: none; }
+  .page-inner { max-width: 1200px; margin: 0 auto; }
+
+  /* ───── Mobile drawer ───── */
+  .drawer-scrim {
+    position: fixed; inset: 0;
+    background: rgba(24,23,26,.5);
+    z-index: 80;
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s;
+  }
+  .drawer-scrim.open { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 84%; max-width: 320px;
+    background: #fff;
+    z-index: 90;
+    transform: translateX(-100%);
+    transition: transform .28s cubic-bezier(.2,.8,.2,1);
+    display: flex; flex-direction: column;
+    box-shadow: var(--shadow-3);
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-head {
+    background: var(--maroon-700);
+    color: #fff;
+    padding: 22px 20px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .drawer-head .header-mark { background: var(--gold-500); color: var(--maroon-900); }
+  .drawer-head-title { font-weight: 700; font-size: 17px; }
+  .drawer-head-sub { font-size: 12px; color: rgba(255,255,255,.7); margin-top: 2px; font-family: var(--font-mono); }
+  .drawer-nav { flex: 1; padding: 8px 0; overflow-y: auto; }
+  .drawer-link {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 20px;
+    width: 100%;
+    text-align: left;
+    color: var(--ink-800);
+    font-size: 15px; font-weight: 500;
+    transition: background .15s, color .15s;
+  }
+  .drawer-link:hover, .drawer-link:active { background: var(--ink-100); }
+  .drawer-link.active {
+    background: var(--maroon-50);
+    color: var(--maroon-700);
+    font-weight: 600;
+    border-left: 3px solid var(--maroon-700);
+    padding-left: 17px;
+  }
+  .drawer-link svg { color: var(--ink-500); flex-shrink: 0; }
+  .drawer-link.active svg { color: var(--maroon-700); }
+  .drawer-foot {
+    padding: 16px 20px;
+    border-top: 1px solid var(--ink-200);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-500);
+  }
+
+  /* ───── Sections ───── */
+  .section {
+    padding: 16px;
+  }
+  .section-title {
+    font-size: 11px; font-weight: 600; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--ink-500);
+    margin: 0 0 10px;
+    font-family: var(--font-mono);
+  }
+  .section + .section { padding-top: 4px; }
+
+  /* ───── Hero card (Home) ───── */
+  .hero-card {
+    background: linear-gradient(135deg, var(--maroon-800), var(--maroon-700));
+    color: #fff;
+    border-radius: 18px;
+    padding: 18px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-maroon);
+  }
+  .hero-card::after {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--gold-500), transparent 60%);
+    opacity: .35;
+  }
+  .hero-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--gold-300);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .hero-eyebrow::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--gold-300);
+    animation: blink 1.6s ease-in-out infinite;
+  }
+  @keyframes blink { 50% { opacity: .3; } }
+  .hero-stop {
+    font-size: 22px; font-weight: 700; letter-spacing: -0.01em;
+    margin: 6px 0 4px;
+  }
+  .hero-meta {
+    font-size: 13px; color: rgba(255,255,255,.78);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .hero-meta strong { color: var(--gold-300); font-weight: 600; }
+  .hero-arrivals {
+    margin-top: 14px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .hero-arrival-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .hero-arrival-row:last-child { border-bottom: 0; }
+  .hero-arrival-row:active { background: rgba(255,255,255,.06); }
+  .hero-arrival-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+  .hero-arrival-name {
+    flex: 1; font-size: 14px; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .hero-arrival-eta {
+    font-family: var(--font-mono); font-size: 13px; font-weight: 600;
+    color: var(--gold-300); white-space: nowrap;
+  }
+  .hero-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .hero-btn {
+    padding: 11px;
+    border-radius: 10px;
+    font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: background .15s;
+  }
+  .hero-btn-gold { background: var(--gold-500); color: var(--maroon-900); }
+  .hero-btn-gold:active { background: var(--gold-600); }
+  .hero-btn-ghost { background: rgba(255,255,255,.14); color: #fff; }
+  .hero-btn-ghost:active { background: rgba(255,255,255,.22); }
+
+  /* ───── Quick actions row ───── */
+  .quick-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .quick-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px 6px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    border: 1px solid var(--ink-200);
+    transition: transform .12s, box-shadow .15s;
+  }
+  .quick-card:active { transform: scale(0.96); box-shadow: var(--shadow-1); }
+  .quick-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .quick-label {
+    font-size: 11px; font-weight: 600; color: var(--ink-800); text-align: center;
+    line-height: 1.2;
+  }
+
+  /* ───── Service alert banner ───── */
+  .alert-banner {
+    margin: 0 16px 12px;
+    background: rgba(212,154,26,.12);
+    border: 1px solid rgba(212,154,26,.3);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .alert-icon {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--warning); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .alert-text { flex: 1; min-width: 0; font-size: 13px; line-height: 1.4; color: var(--ink-800); }
+  .alert-text strong { color: #8a6510; display: block; margin-bottom: 2px; font-size: 13px; }
+
+  /* ───── Route row ───── */
+  .route-list {
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--ink-200);
+  }
+  .route-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px;
+    border-bottom: 1px solid var(--ink-100);
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .route-row:last-child { border-bottom: 0; }
+  .route-row:active { background: var(--ink-100); }
+  .route-bus {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    background: var(--maroon-100); color: var(--maroon-700);
+  }
+  .route-info { flex: 1; min-width: 0; }
+  .route-name {
+    font-weight: 700; font-size: 15px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .route-sub {
+    font-size: 12px; color: var(--ink-500); margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .route-eta { text-align: right; flex-shrink: 0; line-height: 1; }
+  .route-eta-num {
+    font-family: var(--font-mono);
+    font-weight: 700; font-size: 20px; color: var(--ink-900);
+  }
+  .route-eta-unit { font-size: 10px; color: var(--ink-500); margin-top: 3px; }
+  .route-fav {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-300);
+    flex-shrink: 0;
+  }
+  .route-fav.is-fav { color: var(--gold-500); }
+
+  /* ───── Status pill ───── */
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px; font-weight: 600;
+  }
+  .pill::before {
+    content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor;
+  }
+  .pill-success { background: rgba(46,139,87,.12); color: var(--success); white-space: nowrap; }
+  .pill-warning { background: rgba(212,154,26,.16); color: #8a6510; white-space: nowrap; }
+  .pill-danger { background: rgba(193,59,59,.12); color: var(--danger); white-space: nowrap; }
+
+  /* ───── Map ───── */
+  .map-wrap {
+    position: relative;
+    width: 100%;
+    height: calc(100dvh - var(--header-h));
+    overflow: hidden;
+  }
+  .map-canvas {
+    position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(45deg, #EEE9E0 0 1px, transparent 1px 28px),
+      linear-gradient(180deg, #F0EBDF 0%, #E8E2D0 100%);
+  }
+  .map-canvas svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .map-route { stroke: var(--maroon-500); stroke-width: 5; fill: none; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
+  .map-route-active { stroke: var(--maroon-700); stroke-width: 7; opacity: 1; }
+  .map-pin {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    z-index: 2;
+  }
+  .map-pin-dot {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--maroon-700);
+    border: 3px solid #fff;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    box-shadow: var(--shadow-2);
+  }
+  .map-pin-dot.gold {
+    background: var(--gold-500); color: var(--maroon-900);
+  }
+  .map-bus {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--maroon-700);
+    border: 3px solid var(--gold-500);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(140,29,64,.4);
+    z-index: 3;
+    transition: left 1.2s linear, top 1.2s linear;
+  }
+  .map-bus::after {
+    content: '';
+    position: absolute; inset: -8px;
+    border-radius: 50%;
+    border: 2px solid var(--maroon-700);
+    opacity: .35;
+    animation: pulse 2s ease-out infinite;
+  }
+  .map-user {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--info);
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 6px rgba(31,111,178,.18);
+    z-index: 2;
+  }
+  .map-user::after {
+    content: '';
+    position: absolute; inset: -6px;
+    border-radius: 50%;
+    border: 2px solid var(--info);
+    opacity: .35;
+    animation: pulse 2s ease-out infinite;
+  }
+  @keyframes pulse {
+    0% { transform: scale(.8); opacity: .6; }
+    100% { transform: scale(1.8); opacity: 0; }
+  }
+  .map-controls {
+    position: absolute;
+    top: 16px; right: 16px;
+    display: flex; flex-direction: column; gap: 8px;
+    z-index: 4;
+  }
+  .map-ctrl-btn {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: var(--shadow-2);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-800);
+    transition: transform .12s;
+  }
+  .map-ctrl-btn:active { transform: scale(.92); }
+
+  /* Bottom sheet (over map) */
+  .sheet {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    background: #fff;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,.12);
+    z-index: 5;
+    transition: transform .3s cubic-bezier(.2,.8,.2,1);
+    max-height: 70%;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .sheet.collapsed { transform: translateY(calc(100% - 120px)); }
+  .sheet-handle {
+    display: flex; justify-content: center; padding: 8px;
+    cursor: pointer;
+  }
+  .sheet-handle::before {
+    content: ''; width: 36px; height: 4px; border-radius: 2px;
+    background: var(--ink-300);
+  }
+  .sheet-header { padding: 0 18px 12px; }
+  .sheet-title {
+    font-weight: 700; font-size: 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .sheet-sub { font-size: 12px; color: var(--ink-500); margin-top: 2px; }
+  .sheet-body {
+    flex: 1; overflow-y: auto;
+    padding: 0 18px 24px;
+  }
+
+  /* Stop timeline */
+  .timeline { padding: 4px 0; }
+  .stop {
+    display: grid; grid-template-columns: 32px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 0;
+    position: relative;
+  }
+  .stop::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0; bottom: 0;
+    width: 2px;
+    background: var(--ink-200);
+  }
+  .stop:first-child::before { top: 50%; }
+  .stop:last-child::before { bottom: 50%; }
+  .stop.passed::before { background: var(--maroon-700); }
+  .stop.passed + .stop::before { background: linear-gradient(to bottom, var(--maroon-700) 50%, var(--ink-200) 50%); }
+  .stop-marker {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid var(--ink-300);
+    margin: 0 auto;
+    z-index: 1;
+    position: relative;
+  }
+  .stop.current .stop-marker {
+    border-color: var(--maroon-700);
+    background: var(--maroon-700);
+    box-shadow: 0 0 0 4px rgba(140,29,64,.18);
+  }
+  .stop.passed .stop-marker {
+    background: var(--maroon-700); border-color: var(--maroon-700);
+  }
+  .stop-name { font-weight: 600; font-size: 14px; }
+  .stop.current .stop-name { color: var(--maroon-700); }
+  .stop-time { font-family: var(--font-mono); font-size: 12px; color: var(--ink-500); }
+
+  /* ───── Schedule page ───── */
+  .seg-tabs {
+    display: flex;
+    background: var(--ink-100);
+    border-radius: 999px;
+    padding: 4px;
+    margin-bottom: 16px;
+  }
+  .seg-tab {
+    flex: 1;
+    padding: 9px 12px;
+    font-size: 13px; font-weight: 600;
+    color: var(--ink-700);
+    border-radius: 999px;
+    transition: background .15s, color .15s;
+  }
+  .seg-tab.active {
+    background: #fff;
+    color: var(--ink-900);
+    box-shadow: var(--shadow-1);
+  }
+
+  .schedule-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid var(--ink-200);
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .schedule-head {
+    padding: 12px 14px;
+    background: var(--maroon-700);
+    color: #fff;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .schedule-head-name { font-weight: 700; font-size: 14px; }
+  .schedule-head-meta {
+    font-family: var(--font-mono); font-size: 11px; color: var(--gold-300);
+  }
+  .schedule-times {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--ink-200);
+  }
+  .time-cell {
+    background: #fff;
+    padding: 12px 6px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 13px; font-weight: 500;
+    color: var(--ink-800);
+  }
+  .time-cell.next {
+    background: var(--gold-100);
+    color: var(--maroon-900);
+    font-weight: 700;
+  }
+  .time-cell.passed {
+    color: var(--ink-300);
+    text-decoration: line-through;
+  }
+
+  /* ───── Alerts page ───── */
+  .alert-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid var(--ink-200);
+    padding: 14px;
+    margin-bottom: 10px;
+    display: flex; gap: 12px;
+  }
+  .alert-card.warn { border-left: 3px solid var(--warning); }
+  .alert-card.danger { border-left: 3px solid var(--danger); }
+  .alert-card.info { border-left: 3px solid var(--info); }
+  .alert-card-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: #fff;
+  }
+  .alert-card-body { flex: 1; min-width: 0; }
+  .alert-card-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .alert-card-desc { font-size: 13px; color: var(--ink-700); line-height: 1.4; }
+  .alert-card-time {
+    font-family: var(--font-mono); font-size: 11px; color: var(--ink-500);
+    margin-top: 6px;
+  }
+
+  /* ───── Route detail ETA hero ───── */
+  .eta-hero {
+    background: linear-gradient(135deg, var(--maroon-800), var(--maroon-700));
+    color: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: var(--shadow-maroon);
+    position: relative;
+    overflow: hidden;
+  }
+  .eta-hero::after {
+    content: ''; position: absolute; top: -30px; right: -30px;
+    width: 120px; height: 120px; border-radius: 50%;
+    background: radial-gradient(circle, var(--gold-500), transparent 60%); opacity: .35;
+  }
+  .eta-hero-eyebrow {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--gold-300);
+  }
+  .eta-hero-num {
+    font-size: 64px; font-weight: 800; line-height: 1; letter-spacing: -0.03em;
+    margin: 4px 0;
+    font-feature-settings: "tnum";
+  }
+  .eta-hero-unit {
+    font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+    color: rgba(255,255,255,.78);
+  }
+  .eta-hero-stop {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,.18);
+    font-size: 13px;
+    color: rgba(255,255,255,.85);
+  }
+  .eta-hero-stop strong { color: #fff; font-weight: 700; }
+
+  /* Notify CTA */
+  .notify-cta {
+    width: 100%;
+    padding: 16px;
+    border-radius: 14px;
+    background: var(--gold-500);
+    color: var(--maroon-900);
+    font-weight: 700; font-size: 15px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 4px 14px rgba(241,194,50,.4);
+    transition: background .15s, transform .12s;
+  }
+  .notify-cta:active { transform: translateY(1px); background: var(--gold-600); }
+  .notify-cta.active {
+    background: rgba(46,139,87,.12);
+    color: var(--success);
+    box-shadow: none;
+    border: 1px solid rgba(46,139,87,.3);
+  }
+
+  /* ───── Toast ───── */
+  .toast {
+    position: fixed;
+    left: 50%; bottom: 24px;
+    transform: translate(-50%, 80px);
+    background: var(--ink-900);
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: 999px;
+    font-size: 13px; font-weight: 500;
+    box-shadow: var(--shadow-3);
+    z-index: 100;
+    transition: transform .3s cubic-bezier(.2,.8,.2,1), opacity .3s;
+    opacity: 0;
+    display: flex; align-items: center; gap: 8px;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translate(-50%, 0); opacity: 1; }
+
+  /* ───── Search bar ───── */
+  .search {
+    background: #fff;
+    border: 1px solid var(--ink-200);
+    border-radius: 12px;
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 12px;
+  }
+  .search input {
+    flex: 1; border: 0; outline: none;
+    font-family: inherit; font-size: 14px;
+    background: transparent;
+    color: var(--ink-900);
+  }
+  .search input::placeholder { color: var(--ink-400); }
+
+  /* ───── Page transitions ───── */
+  .page { animation: fadeIn .25s ease-out; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ───── Desktop progressive enhancement ───── */
+  @media (min-width: 768px) {
+    .header {
+      height: var(--header-h-desktop);
+      padding: 0 32px;
+      gap: 24px;
+    }
+    .header-back { display: none !important; }
+    .header-title { flex: 0 0 auto; font-size: 17px; }
+    .primary-switch { margin-left: 24px; }
+    .primary-switch-btn { padding: 9px 20px; font-size: 14px; }
+    .last-updated { font-size: 11px; }
+    .section { padding: 24px 32px; max-width: 1200px; margin: 0 auto; }
+    .map-wrap { height: calc(100dvh - var(--header-h-desktop)); }
+  }
+  @media (min-width: 1024px) {
+    .home-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    .home-grid > .home-main { display: flex; flex-direction: column; gap: 24px; }
+    .home-grid > .home-side { display: flex; flex-direction: column; gap: 24px; position: sticky; top: calc(var(--header-h-desktop) + 24px); }
+    .home-grid .section { padding: 0; max-width: none; }
+    .quick-row { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <!-- Header -->
+  <header class="header">
+    <button class="header-back" id="backBtn" style="display:none" aria-label="Back">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="header-mark" id="headerMark">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M4 11h16M7 17v2M17 17v2"/></svg>
+    </div>
+    <div class="header-title" id="headerTitle">Shuttle Tracker</div>
+
+    <!-- Primary switcher: Home / Live Map -->
+    <div class="primary-switch" id="primarySwitch">
+      <button class="primary-switch-btn active" data-tab="home" onclick="goTab('home')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8v10a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2z"/></svg>
+        Home
+      </button>
+      <button class="primary-switch-btn" data-tab="map" onclick="goTab('map')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-6-3V5l6 3 6-3 6 3v12l-6-3-6 3z"/><path d="M9 8v12M15 5v12"/></svg>
+        Live Map
+      </button>
+    </div>
+
+    <div style="flex:1"></div>
+    <div class="last-updated" id="lastUpdated">12s ago</div>
+    <button class="header-icon-btn refresh-btn" id="refreshBtn" aria-label="Refresh">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.3L3 16M3 21v-5h5"/></svg>
+    </button>
+    <div style="position:relative">
+      <button class="more-btn" id="moreBtn" aria-label="More">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+      </button>
+      <div class="more-menu" id="moreMenu">
+        <button class="more-item" data-tab="routes" onclick="goTab('routes'); closeMore()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M4 11h16M7 17v2M17 17v2"/></svg>
+          All Routes
+        </button>
+        <button class="more-item" data-tab="schedule" onclick="goTab('schedule'); closeMore()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          Schedule
+        </button>
+        <button class="more-item" data-tab="alerts" onclick="goTab('alerts'); closeMore()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9zM10 21a2 2 0 0 0 4 0"/></svg>
+          Alerts
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile drawer (no longer used; kept hidden) -->
+  <div class="drawer-scrim" id="drawerScrim" style="display:none"></div>
+  <aside class="drawer" id="drawer" style="display:none"></aside>
+
+  <!-- ─────────── HOME ─────────── -->
+  <div class="page" id="page-home" data-screen-label="01 Home">
+    <!-- Service alert -->
+    <div class="alert-banner" style="margin-top:16px">
+      <div class="alert-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+      </div>
+      <div class="alert-text">
+        <strong>Service alert</strong>
+        Polytechnic route running 4 min late due to construction on Apache Blvd.
+      </div>
+    </div>
+
+    <!-- Hero: Nearest stop -->
+    <div class="section">
+      <div class="hero-card">
+        <div class="hero-eyebrow">Nearest stop · 0.3 mi away</div>
+        <div class="hero-stop">Forest &amp; Lemon</div>
+        <div class="hero-meta">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg>
+          <span><strong>6 min</strong> walk · 3 routes serve this stop</span>
+        </div>
+        <div class="hero-arrivals">
+          <div class="hero-arrival-row" onclick="goRoute('tempe-poly')">
+            <div class="hero-arrival-dot" style="background:var(--gold-500)"></div>
+            <div class="hero-arrival-name">Tempe → Polytechnic</div>
+            <div class="hero-arrival-eta">5 min</div>
+          </div>
+          <div class="hero-arrival-row" onclick="goRoute('tempe-downtown')">
+            <div class="hero-arrival-dot" style="background:var(--campus-downtown)"></div>
+            <div class="hero-arrival-name">Tempe → Downtown</div>
+            <div class="hero-arrival-eta">10 min</div>
+          </div>
+          <div class="hero-arrival-row" onclick="goRoute('tempe-west')">
+            <div class="hero-arrival-dot" style="background:var(--campus-west)"></div>
+            <div class="hero-arrival-name">Tempe → West</div>
+            <div class="hero-arrival-eta">22 min</div>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="hero-btn hero-btn-gold" onclick="toast('🔔 Alert set for next arrival')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9zM10 21a2 2 0 0 0 4 0"/></svg>
+            Notify me
+          </button>
+          <button class="hero-btn hero-btn-ghost" onclick="goTab('map')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-7.5-8-13a8 8 0 1 1 16 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="9" r="3"/></svg>
+            View on map
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="section">
+      <div class="quick-row">
+        <button class="quick-card" onclick="goTab('map')">
+          <div class="quick-icon" style="background:var(--maroon-100); color:var(--maroon-700)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-6-3V5l6 3 6-3 6 3v12l-6-3-6 3z"/><path d="M9 8v12M15 5v12"/></svg>
+          </div>
+          <span class="quick-label">Live Map</span>
+        </button>
+        <button class="quick-card" onclick="goTab('routes')">
+          <div class="quick-icon" style="background:#FCE9D7; color:var(--campus-poly)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M4 11h16M7 17v2M17 17v2"/></svg>
+          </div>
+          <span class="quick-label">All Routes</span>
+        </button>
+        <button class="quick-card" onclick="goTab('schedule')">
+          <div class="quick-icon" style="background:#DCEAF6; color:var(--campus-downtown)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          </div>
+          <span class="quick-label">Schedule</span>
+        </button>
+        <button class="quick-card" onclick="goTab('alerts')">
+          <div class="quick-icon" style="background:rgba(212,154,26,.16); color:#8a6510">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9zM10 21a2 2 0 0 0 4 0"/></svg>
+          </div>
+          <span class="quick-label">Alerts</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Saved -->
+    <div class="section">
+      <h3 class="section-title">Saved routes</h3>
+      <div class="route-list">
+        <div class="route-row" onclick="goRoute('tempe-poly')">
+          <div class="route-bus" style="background:var(--maroon-100); color:var(--maroon-700)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M4 11h16M7 17v2M17 17v2"/></svg>
+          </div>
+          <div class="route-info">
+            <div class="route-name">Tempe → Polytechnic</div>
+            <div class="route-sub">Next: Forest &amp; Lemon · <span class="pill pill-success" style="padding:1px 6px;font-size:10px">on time</span></div>
+          </div>
+          <div class="route-eta">
+            <div class="route-eta-num">5</div>
+            <div class="route-eta-unit">MIN</div>
+          </div>
+          <div class="route-fav is-fav">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 15,9 22,9 17,14 19,22 12,18 5,22 7,14 2,9 9,9"/></svg>
+          </div>
+        </div>
+        <div class="route-row" onclick="goRoute('tempe-downtown')">
+          <div class="route-bus" style="background:#DCEAF6; color:var(--campus-downtown)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M4 11h16M7 17v2M17 17v2"/></svg>
+          </div>
+          <div class="route-info">
+            <div class="route-name">Tempe → Downtown</div>
+            <div class="route-sub">Next: University &amp; Mill · <span class="pill pill-warning" style="padding:1px 6px;font-size:10px">+4 min</span></div>
+          </div>
+          <div class="route-eta">
+            <div class="route-eta-num">10</div>
+            <div class="route-eta-unit">MIN</div>
+          </div>
+          <div class="route-fav is-fav">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 15,9 22,9 17,14 19,22 12,18 5,22 7,14 2,9 9,9"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────── MAP ─────────── -->
+  <div class="page hidden" id="page-map" data-screen-label="02 Live Map">
+    <div class="map-wrap">
+      <div class="map-canvas">
+        <svg viewBox="0 0 800 1200" preserveAspectRatio="none">
+          <path class="map-route" d="M 80 1100 Q 240 1000 360 880 T 600 680 Q 700 580 740 360"/>
+          <path class="map-route map-route-active" d="M 80 1100 Q 240 1000 360 880 T 480 800"/>
+          <path class="map-route" stroke="var(--campus-downtown)" d="M 80 1100 Q 200 1080 320 1020 T 560 920"/>
+          <path class="map-route" stroke="var(--campus-west)" d="M 80 1100 Q 160 1140 240 1180" stroke-opacity=".4"/>
+        </svg>
+        <!-- Stops -->
+        <div class="map-pin" style="left:10%;top:91%">
+          <div class="map-pin-dot gold" style="width:32px;height:32px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+          </div>
+        </div>
+        <div class="map-pin" style="left:46%;top:65%">
+          <div class="map-pin-dot">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"/></svg>
+          </div>
+        </div>
+        <div class="map-pin" style="left:90%;top:30%">
+          <div class="map-pin-dot">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 2 22h20z"/></svg>
+          </div>
+        </div>
+        <!-- Bus marker (animated) -->
+        <div class="map-bus" id="busMarker" style="left:42%;top:70%">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M4 11h16M7 17v2M17 17v2"/></svg>
+        </div>
+        <!-- User -->
+        <div class="map-user" style="left:14%;top:88%"></div>
+      </div>
+
+      <!-- Map controls -->
+      <div class="map-controls">
+        <button class="map-ctrl-btn" aria-label="Zoom in">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <button class="map-ctrl-btn" aria-label="Zoom out">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg>
+        </button>
+        <button class="map-ctrl-btn" aria-label="Recenter" onclick="toast('📍 Centered on you')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+        </button>
+      </div>
+
+      <!-- Bottom sheet -->
+      <div class="sheet collapsed" id="mapSheet">
+        <div class="sheet-handle" onclick="toggleSheet()"></div>
+        <div class="sheet-header">
+          <div class="sheet-title">
+            <span>Tempe → Polytechnic</span>
+            <span class="pill pill-success">on time</span>
+          </div>
+          <div class="sheet-sub">Bus #214 · Forest &amp; Lemon · 5 min away</div>
+        </div>
+        <div class="sheet-body">
+          <div class="timeline">
+            <div class="stop passed">
+              <div class="stop-marker"></div>
+              <div class="stop-name">University &amp; Mill</div>
+              <div class="stop-time">8:42</div>
+            </div>
+            <div class="stop passed">
+              <div class="stop-marker"></div>
+              <div class="stop-name">Apache Blvd</div>
+              <div class="stop-time">8:48</div>
+            </div>
+            <div class="stop current">
+              <div class="stop-marker"></div>
+              <div class="stop-name">Forest &amp; Lemon</div>
+              <div class="stop-time">8:55</div>
+            </div>
+            <div class="stop">
+              <div class="stop-marker"></div>
+              <div class="stop-name">Rural &amp; Broadway</div>
+              <div class="stop-time">9:02</div>
+            </div>
+            <div class="stop">
+              <div class="stop-marker"></div>
+              <div class="stop-name">Polytechnic Campus</div>
+              <div class="stop-time">9:18</div>
+            </div>
+          </div>
+          <button class="notify-cta" style="margin-top:12px" onclick="toast('🔔 You will be notified 5 min before arrival')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9zM10 21a2 2 0 0 0 4 0"/></svg>
+            Notify 5 min before arrival
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────── ROUTES ─────────── -->
+  <div class="page hidden" id="page-routes" data-screen-label="03 Routes">
+    <div class="section">
+      <div class="search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-500)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input placeholder="Search routes or stops" />
+      </div>
+      <div class="seg-tabs">
+        <button class="seg-tab active">All</button>
+        <button class="seg-tab">Tempe</button>
+        <button class="seg-tab">Poly</button>
+        <button class="seg-tab">West</button>
+      </div>
+      <div class="route-list">
+        <div class="route-row" onclick="goRoute('tempe-poly')">
+          <div class="route-bus" style="background:var(--maroon-100); color:var(--maroon-700)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M4 11h16"/></svg>
+          </div>
+          <div class="route-info">
+            <div class="route-name">Tempe → Polytechnic</div>
+            <div class="route-sub">Every 15 min · 8 stops</div>
+          </div>
+          <div class="route-eta"><div class="route-eta-num">5</div><div class="route-eta-unit">MIN</div></div>
+        </div>
+        <div class="route-row" onclick="goRoute('tempe-downtown')">
+          <div class="route-bus" style="background:#DCEAF6; color:var(--campus-downtown)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M4 11h16"/></svg>
+          </div>
+          <div class="route-info">
+            <div class="route-name">Tempe → Downtown</div>
+            <div class="route-sub">Every 20 min · 6 stops</div>
+          </div>
+          <div class="route-eta"><div class="route-eta-num">10</div><div class="route-eta-unit">MIN</div></div>
+        </div>
+        <div class="route-row" onclick="goRoute('tempe-west')">
+          <div class="route-bus" style="background:#D8EBE0; color:var(--campus-west)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M4 11h16"/></svg>
+          </div>
+          <div class="route-info">
+            <div class="route-name">Tempe → West</div>
+            <div class="route-sub">Every 30 min · 5 stops</div>
+          </div>
+          <div class="route-eta"><div class="route-eta-num">22</div><div class="route-eta-unit">MIN</div></div>
+        </div>
+        <div class="route-row" onclick="goRoute('poly-downtown')">
+          <div class="route-bus" style="background:#FCE9D7; color:var(--campus-poly)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M4 11h16"/></svg>
+          </div>
+          <div class="route-info">
+            <div class="route-name">Polytechnic → Downtown</div>
+            <div class="route-sub">Every 25 min · 7 stops</div>
+          </div>
+          <div class="route-eta"><div class="route-eta-num">14</div><div class="route-eta-unit">MIN</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────── SCHEDULE ─────────── -->
+  <div class="page hidden" id="page-schedule" data-screen-label="04 Schedule">
+    <div class="section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+        <div>
+          <h3 class="section-title" style="margin:0 0 4px">Today's schedule</h3>
+          <div id="todayDate" style="font-size:13px;color:var(--ink-700);font-weight:500">Wednesday, Mar 12</div>
+        </div>
+        <span class="pill pill-success" style="padding:4px 10px;font-size:11px">live</span>
+      </div>
+
+      <!-- Stop selector -->
+      <label style="display:block;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-500);margin-bottom:8px;font-family:var(--font-mono)">Select a stop</label>
+      <div style="position:relative;margin-bottom:18px">
+        <select id="stopSelect" onchange="renderSchedule()" style="width:100%;padding:14px 44px 14px 16px;font-family:inherit;font-size:15px;font-weight:600;color:var(--ink-900);background:#fff;border:1px solid var(--ink-200);border-radius:12px;appearance:none;-webkit-appearance:none;cursor:pointer;outline:none;box-shadow:var(--shadow-1)">
+          <option value="forest-lemon">Forest &amp; Lemon</option>
+          <option value="university-mill">University &amp; Mill</option>
+          <option value="apache-blvd">Apache Blvd</option>
+          <option value="rural-broadway">Rural &amp; Broadway</option>
+          <option value="poly-campus">Polytechnic Campus</option>
+        </select>
+        <svg style="position:absolute;right:16px;top:50%;transform:translateY(-50%);pointer-events:none" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-500)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+
+      <div id="scheduleContent"></div>
+    </div>
+  </div>
+
+  <!-- ─────────── ALERTS ─────────── -->
+  <div class="page hidden" id="page-alerts" data-screen-label="05 Alerts">
+    <div class="section">
+      <h3 class="section-title">Active alerts</h3>
+      <div class="alert-card warn">
+        <div class="alert-card-icon" style="background:var(--warning)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+        </div>
+        <div class="alert-card-body">
+          <div class="alert-card-title">Polytechnic route delayed</div>
+          <div class="alert-card-desc">Construction on Apache Blvd is causing 4-min delays. Plan accordingly.</div>
+          <div class="alert-card-time">Posted 18 min ago · Tempe → Polytechnic</div>
+        </div>
+      </div>
+      <div class="alert-card info">
+        <div class="alert-card-icon" style="background:var(--info)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+        </div>
+        <div class="alert-card-body">
+          <div class="alert-card-title">Schedule change starting Monday</div>
+          <div class="alert-card-desc">West campus route will run every 25 minutes instead of 30.</div>
+          <div class="alert-card-time">Posted 2 hours ago · Tempe → West</div>
+        </div>
+      </div>
+
+      <h3 class="section-title" style="margin-top:24px">Recent</h3>
+      <div class="alert-card danger">
+        <div class="alert-card-icon" style="background:var(--danger)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </div>
+        <div class="alert-card-body">
+          <div class="alert-card-title">Bus #208 cancelled (resolved)</div>
+          <div class="alert-card-desc">Mechanical issue. A replacement was dispatched.</div>
+          <div class="alert-card-time">Yesterday 4:12 PM · Tempe → Downtown</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────── ROUTE DETAIL ─────────── -->
+  <div class="page hidden" id="page-route-detail" data-screen-label="Route Detail">
+    <div class="section">
+      <div class="eta-hero">
+        <div class="eta-hero-eyebrow">Arriving in</div>
+        <div class="eta-hero-num" id="etaNum">5</div>
+        <div class="eta-hero-unit">MINUTES</div>
+        <div class="eta-hero-stop">at <strong>Forest &amp; Lemon</strong></div>
+      </div>
+    </div>
+    <div class="section">
+      <h3 class="section-title">Stops along this route</h3>
+      <div class="route-list" style="padding:8px 16px">
+        <div class="timeline">
+          <div class="stop passed"><div class="stop-marker"></div><div class="stop-name">University &amp; Mill</div><div class="stop-time">8:42</div></div>
+          <div class="stop passed"><div class="stop-marker"></div><div class="stop-name">Apache Blvd</div><div class="stop-time">8:48</div></div>
+          <div class="stop current"><div class="stop-marker"></div><div class="stop-name">Forest &amp; Lemon</div><div class="stop-time">8:55</div></div>
+          <div class="stop"><div class="stop-marker"></div><div class="stop-name">Rural &amp; Broadway</div><div class="stop-time">9:02</div></div>
+          <div class="stop"><div class="stop-marker"></div><div class="stop-name">Polytechnic Campus</div><div class="stop-time">9:18</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <button class="notify-cta" id="notifyBtn" onclick="toggleNotify()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9zM10 21a2 2 0 0 0 4 0"/></svg>
+        <span id="notifyLabel">Notify 5 min before arrival</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+</div>
+
+<script>
+  const TAB_TITLES = {
+    home: 'Shuttle Tracker',
+    map: 'Live Map',
+    routes: 'Routes',
+    schedule: 'Schedule',
+    alerts: 'Alerts'
+  };
+  const ROUTE_TITLES = {
+    'tempe-poly': 'Tempe → Polytechnic',
+    'tempe-downtown': 'Tempe → Downtown',
+    'tempe-west': 'Tempe → West',
+    'poly-downtown': 'Polytechnic → Downtown'
+  };
+  let currentTab = 'home';
+  let lastTab = 'home';
+
+  function goTab(tab) {
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+    document.getElementById('page-' + tab).classList.remove('hidden');
+    document.querySelectorAll('.primary-switch-btn, .more-item').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+    document.getElementById('headerTitle').textContent = TAB_TITLES[tab];
+    document.getElementById('backBtn').style.display = 'none';
+    document.getElementById('headerMark').style.display = 'flex';
+    currentTab = tab;
+    lastTab = tab;
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+
+  function goRoute(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+    document.getElementById('page-route-detail').classList.remove('hidden');
+    document.getElementById('headerTitle').textContent = ROUTE_TITLES[id] || 'Route';
+    document.getElementById('backBtn').style.display = 'flex';
+    document.getElementById('headerMark').style.display = 'none';
+    document.querySelectorAll('.primary-switch-btn, .more-item').forEach(t => t.classList.remove('active'));
+    currentTab = 'route-detail';
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+
+  document.getElementById('backBtn').addEventListener('click', () => goTab(lastTab));
+
+  function openMore() { document.getElementById('moreMenu').classList.add('open'); }
+  function closeMore() { document.getElementById('moreMenu').classList.remove('open'); }
+  document.getElementById('moreBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.getElementById('moreMenu').classList.toggle('open');
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#moreMenu') && !e.target.closest('#moreBtn')) closeMore();
+  });
+
+  function toggleSheet() {
+    document.getElementById('mapSheet').classList.toggle('collapsed');
+  }
+
+  let notified = false;
+  function toggleNotify() {
+    notified = !notified;
+    const btn = document.getElementById('notifyBtn');
+    const lbl = document.getElementById('notifyLabel');
+    if (notified) {
+      btn.classList.add('active');
+      lbl.textContent = '✓ Alert set — we’ll notify you';
+      toast('🔔 Alert set for 5 min before arrival');
+    } else {
+      btn.classList.remove('active');
+      lbl.textContent = 'Notify 5 min before arrival';
+    }
+  }
+
+  let toastTimer;
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  // Refresh button
+  let elapsed = 12;
+  function updateStamp() {
+    document.getElementById('lastUpdated').textContent = elapsed + 's ago';
+  }
+  setInterval(() => { elapsed++; updateStamp(); }, 1000);
+  document.getElementById('refreshBtn').addEventListener('click', () => {
+    const btn = document.getElementById('refreshBtn');
+    btn.classList.add('spinning');
+    setTimeout(() => {
+      btn.classList.remove('spinning');
+      btn.style.transform = '';
+      elapsed = 0;
+      updateStamp();
+      // Tick down ETA
+      const eta = document.getElementById('etaNum');
+      if (eta) {
+        const n = Math.max(0, parseInt(eta.textContent) - 1);
+        eta.textContent = n;
+      }
+    }, 600);
+  });
+
+  // ─── Schedule data: routes serving each stop ───
+  const STOP_SCHEDULES = {
+    'forest-lemon': {
+      name: 'Forest & Lemon',
+      routes: [
+        { name: 'Tempe → Polytechnic', color: 'var(--maroon-700)', interval: 'Every 15 min',
+          times: ['7:25','7:40','7:55','8:10','8:25','8:40','8:55','9:10','9:25','9:40','9:55','10:10','10:25','10:40','10:55'] },
+        { name: 'Tempe → Downtown', color: 'var(--campus-downtown)', interval: 'Every 20 min',
+          times: ['7:32','7:52','8:12','8:32','8:52','9:12','9:32','9:52','10:12','10:32','10:52'] },
+        { name: 'Tempe → West', color: 'var(--campus-west)', interval: 'Every 30 min',
+          times: ['7:15','7:45','8:15','8:45','9:15','9:45','10:15','10:45'] }
+      ]
+    },
+    'university-mill': {
+      name: 'University & Mill',
+      routes: [
+        { name: 'Tempe → Downtown', color: 'var(--campus-downtown)', interval: 'Every 20 min',
+          times: ['7:30','7:50','8:10','8:30','8:50','9:10','9:30','9:50','10:10','10:30','10:50'] },
+        { name: 'Tempe → Polytechnic', color: 'var(--maroon-700)', interval: 'Every 15 min',
+          times: ['7:18','7:33','7:48','8:03','8:18','8:33','8:48','9:03','9:18','9:33','9:48','10:03','10:18'] }
+      ]
+    },
+    'apache-blvd': {
+      name: 'Apache Blvd',
+      routes: [
+        { name: 'Tempe → Polytechnic', color: 'var(--maroon-700)', interval: 'Every 15 min',
+          times: ['7:21','7:36','7:51','8:06','8:21','8:36','8:51','9:06','9:21','9:36','9:51','10:06'] },
+        { name: 'Polytechnic → Downtown', color: 'var(--campus-poly)', interval: 'Every 25 min',
+          times: ['7:40','8:05','8:30','8:55','9:20','9:45','10:10','10:35'] }
+      ]
+    },
+    'rural-broadway': {
+      name: 'Rural & Broadway',
+      routes: [
+        { name: 'Tempe → Polytechnic', color: 'var(--maroon-700)', interval: 'Every 15 min',
+          times: ['7:32','7:47','8:02','8:17','8:32','8:47','9:02','9:17','9:32','9:47','10:02','10:17'] },
+        { name: 'Tempe → West', color: 'var(--campus-west)', interval: 'Every 30 min',
+          times: ['7:25','7:55','8:25','8:55','9:25','9:55','10:25'] }
+      ]
+    },
+    'poly-campus': {
+      name: 'Polytechnic Campus',
+      routes: [
+        { name: 'Tempe → Polytechnic', color: 'var(--maroon-700)', interval: 'Every 15 min',
+          times: ['7:48','8:03','8:18','8:33','8:48','9:03','9:18','9:33','9:48','10:03','10:18','10:33'] },
+        { name: 'Polytechnic → Downtown', color: 'var(--campus-poly)', interval: 'Every 25 min',
+          times: ['7:55','8:20','8:45','9:10','9:35','10:00','10:25','10:50'] }
+      ]
+    }
+  };
+
+  // Pretend "now" = 8:55 — anything earlier is passed, the next is highlighted
+  function timeToMin(t) { const [h,m] = t.split(':').map(Number); return h*60+m; }
+  const NOW_MIN = 8*60 + 55;
+
+  function renderSchedule() {
+    const sel = document.getElementById('stopSelect');
+    if (!sel) return;
+    const stop = STOP_SCHEDULES[sel.value];
+    const container = document.getElementById('scheduleContent');
+    if (!stop) return;
+
+    let html = `<div style="font-size:13px;color:var(--ink-700);margin-bottom:14px"><strong style="color:var(--ink-900)">${stop.routes.length} routes</strong> pass through this stop today</div>`;
+
+    stop.routes.forEach(r => {
+      let nextFound = false;
+      const cells = r.times.map(t => {
+        const m = timeToMin(t);
+        if (m < NOW_MIN) return `<div class="time-cell passed">${t}</div>`;
+        if (!nextFound) { nextFound = true; return `<div class="time-cell next">${t}</div>`; }
+        return `<div class="time-cell">${t}</div>`;
+      }).join('');
+
+      html += `
+        <h3 class="section-title" style="margin-top:18px">${r.name}</h3>
+        <div class="schedule-card">
+          <div class="schedule-head" style="background:${r.color}">
+            <div class="schedule-head-name">Departures from ${stop.name}</div>
+            <div class="schedule-head-meta">${r.interval.toUpperCase()}</div>
+          </div>
+          <div class="schedule-times">${cells}</div>
+        </div>`;
+    });
+
+    container.innerHTML = html;
+  }
+  renderSchedule();
+
+  // Animate bus marker along route
+  const busPath = [
+    { left: 42, top: 70 },
+    { left: 46, top: 65 },
+    { left: 52, top: 60 },
+    { left: 60, top: 53 },
+    { left: 68, top: 46 },
+    { left: 76, top: 40 },
+    { left: 82, top: 36 },
+    { left: 88, top: 32 }
+  ];
+  let busIdx = 0;
+  setInterval(() => {
+    busIdx = (busIdx + 1) % busPath.length;
+    const b = document.getElementById('busMarker');
+    if (b) {
+      b.style.left = busPath[busIdx].left + '%';
+      b.style.top = busPath[busIdx].top + '%';
+    }
+  }, 2000);
+</script>
+
+</body>
+</html>
