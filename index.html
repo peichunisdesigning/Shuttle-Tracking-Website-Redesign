@@ -430,17 +430,45 @@
   }
   .map-canvas {
     position: absolute; inset: 0;
-    background:
-      repeating-linear-gradient(45deg, #EEE9E0 0 1px, transparent 1px 28px),
-      linear-gradient(180deg, #F0EBDF 0%, #E8E2D0 100%);
+    background: #E8E5DC;
+    overflow: hidden;
   }
-  .map-canvas svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .map-route { stroke: var(--maroon-500); stroke-width: 5; fill: none; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
-  .map-route-active { stroke: var(--maroon-700); stroke-width: 7; opacity: 1; }
+  .map-canvas svg.map-svg {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    display: block;
+  }
+  /* Map layers */
+  .map-park { fill: #C8DDB8; }
+  .map-water { fill: #B7D3E5; }
+  .map-block { fill: #F2EFE6; stroke: #DAD4C4; stroke-width: .6; }
+  .map-building { fill: #E2DCC9; stroke: #C9C2AB; stroke-width: .4; }
+  .map-building-campus { fill: #DCC9CF; stroke: #B89AA4; stroke-width: .5; }
+  .map-street { stroke: #FFFFFF; fill: none; stroke-linecap: round; }
+  .map-street-major { stroke: #FFFFFF; stroke-width: 12; }
+  .map-street-major-casing { stroke: #D8D2C0; stroke-width: 14; }
+  .map-street-minor { stroke: #FFFFFF; stroke-width: 6; opacity: .9; }
+  .map-street-label { fill: #847D6A; font-size: 10px; font-weight: 600; font-family: var(--font-sans); letter-spacing: .04em; }
+  .map-area-label { fill: #6B6555; font-size: 11px; font-weight: 700; font-family: var(--font-sans); letter-spacing: .12em; text-transform: uppercase; opacity: .65; }
+  .map-route { stroke: var(--maroon-500); stroke-width: 5; fill: none; stroke-linecap: round; stroke-linejoin: round; opacity: .7; }
+  .map-route-active { stroke: var(--maroon-700); stroke-width: 6; opacity: 1; filter: drop-shadow(0 1px 2px rgba(140,29,64,.3)); }
+  .map-route-dash {
+    stroke-dasharray: 8 6;
+    animation: routeFlow 1s linear infinite;
+  }
+  @keyframes routeFlow {
+    to { stroke-dashoffset: -14; }
+  }
   .map-pin {
     position: absolute;
     transform: translate(-50%, -100%);
     z-index: 2;
+    background: none; border: 0; padding: 0; cursor: pointer;
+    transition: transform .15s;
+  }
+  .map-pin:hover { transform: translate(-50%, -100%) scale(1.1); z-index: 4; }
+  .map-pin.selected .map-pin-dot {
+    box-shadow: 0 0 0 4px rgba(241,194,50,.5), var(--shadow-2);
   }
   .map-pin-dot {
     width: 28px; height: 28px;
@@ -988,34 +1016,230 @@
   <div class="page hidden" id="page-map" data-screen-label="02 Live Map">
     <div class="map-wrap">
       <div class="map-canvas">
-        <svg viewBox="0 0 800 1200" preserveAspectRatio="none">
-          <path class="map-route" d="M 80 1100 Q 240 1000 360 880 T 600 680 Q 700 580 740 360"/>
-          <path class="map-route map-route-active" d="M 80 1100 Q 240 1000 360 880 T 480 800"/>
-          <path class="map-route" stroke="var(--campus-downtown)" d="M 80 1100 Q 200 1080 320 1020 T 560 920"/>
-          <path class="map-route" stroke="var(--campus-west)" d="M 80 1100 Q 160 1140 240 1180" stroke-opacity=".4"/>
+        <svg class="map-svg" viewBox="0 0 800 1200" preserveAspectRatio="none">
+          <!-- Park / green areas -->
+          <rect class="map-park" x="60" y="940" width="200" height="160" rx="6"/>
+          <rect class="map-park" x="540" y="80" width="220" height="140" rx="6"/>
+          <circle class="map-park" cx="180" cy="500" r="70"/>
+          <!-- Water -->
+          <path class="map-water" d="M 0 200 Q 160 240 320 200 T 640 220 L 800 240 L 800 280 Q 640 300 480 270 T 160 290 L 0 270 Z"/>
+          <text class="map-area-label" x="200" y="260" opacity=".5">Salt River</text>
+
+          <!-- City blocks (light tiles) -->
+          <g opacity=".7">
+            <rect class="map-block" x="60" y="320" width="180" height="140" rx="3"/>
+            <rect class="map-block" x="260" y="320" width="180" height="140" rx="3"/>
+            <rect class="map-block" x="460" y="320" width="160" height="140" rx="3"/>
+            <rect class="map-block" x="640" y="320" width="120" height="140" rx="3"/>
+
+            <rect class="map-block" x="60" y="480" width="100" height="120" rx="3"/>
+            <rect class="map-block" x="260" y="480" width="180" height="120" rx="3"/>
+            <rect class="map-block" x="460" y="480" width="160" height="120" rx="3"/>
+            <rect class="map-block" x="640" y="480" width="120" height="120" rx="3"/>
+
+            <rect class="map-block" x="60" y="620" width="180" height="160" rx="3"/>
+            <rect class="map-block" x="260" y="620" width="180" height="160" rx="3"/>
+            <rect class="map-block" x="460" y="620" width="160" height="160" rx="3"/>
+            <rect class="map-block" x="640" y="620" width="120" height="160" rx="3"/>
+
+            <rect class="map-block" x="60" y="800" width="180" height="120" rx="3"/>
+            <rect class="map-block" x="260" y="800" width="180" height="120" rx="3"/>
+            <rect class="map-block" x="460" y="800" width="160" height="120" rx="3"/>
+            <rect class="map-block" x="640" y="800" width="120" height="120" rx="3"/>
+
+            <rect class="map-block" x="280" y="940" width="160" height="160" rx="3"/>
+            <rect class="map-block" x="460" y="940" width="160" height="160" rx="3"/>
+            <rect class="map-block" x="640" y="940" width="120" height="160" rx="3"/>
+          </g>
+
+          <!-- Buildings -->
+          <g>
+            <!-- Generic buildings -->
+            <rect class="map-building" x="80" y="340" width="50" height="40"/>
+            <rect class="map-building" x="140" y="340" width="40" height="60"/>
+            <rect class="map-building" x="190" y="345" width="44" height="50"/>
+            <rect class="map-building" x="80" y="410" width="60" height="38"/>
+            <rect class="map-building" x="150" y="410" width="80" height="40"/>
+
+            <rect class="map-building" x="280" y="340" width="60" height="50"/>
+            <rect class="map-building" x="350" y="340" width="40" height="80"/>
+            <rect class="map-building" x="400" y="345" width="36" height="60"/>
+            <rect class="map-building" x="280" y="410" width="80" height="42"/>
+            <rect class="map-building" x="370" y="425" width="60" height="30"/>
+
+            <rect class="map-building" x="480" y="340" width="60" height="60"/>
+            <rect class="map-building" x="550" y="340" width="60" height="40"/>
+            <rect class="map-building" x="480" y="410" width="40" height="40"/>
+            <rect class="map-building" x="530" y="395" width="50" height="55"/>
+            <rect class="map-building" x="590" y="400" width="20" height="50"/>
+
+            <rect class="map-building" x="660" y="340" width="40" height="50"/>
+            <rect class="map-building" x="710" y="340" width="40" height="80"/>
+            <rect class="map-building" x="660" y="400" width="90" height="46"/>
+
+            <rect class="map-building" x="80" y="500" width="68" height="38"/>
+            <rect class="map-building" x="80" y="550" width="40" height="38"/>
+            <rect class="map-building" x="130" y="550" width="20" height="38"/>
+
+            <rect class="map-building" x="280" y="500" width="50" height="40"/>
+            <rect class="map-building" x="340" y="500" width="40" height="60"/>
+            <rect class="map-building" x="390" y="500" width="40" height="40"/>
+            <rect class="map-building" x="280" y="555" width="80" height="35"/>
+            <rect class="map-building" x="370" y="555" width="60" height="35"/>
+
+            <!-- Tempe campus (maroon-tinted) -->
+            <rect class="map-building-campus" x="480" y="500" width="60" height="40"/>
+            <rect class="map-building-campus" x="550" y="500" width="60" height="60"/>
+            <rect class="map-building-campus" x="480" y="555" width="40" height="40"/>
+            <rect class="map-building-campus" x="530" y="575" width="80" height="20"/>
+            <text class="map-area-label" x="487" y="495" font-size="9" letter-spacing="0">TEMPE CAMPUS</text>
+
+            <rect class="map-building" x="660" y="500" width="40" height="50"/>
+            <rect class="map-building" x="710" y="500" width="40" height="80"/>
+            <rect class="map-building" x="660" y="560" width="40" height="30"/>
+
+            <rect class="map-building" x="80" y="640" width="60" height="48"/>
+            <rect class="map-building" x="150" y="640" width="80" height="40"/>
+            <rect class="map-building" x="80" y="700" width="40" height="60"/>
+            <rect class="map-building" x="130" y="690" width="40" height="40"/>
+            <rect class="map-building" x="180" y="700" width="50" height="60"/>
+
+            <rect class="map-building" x="280" y="640" width="50" height="40"/>
+            <rect class="map-building" x="340" y="640" width="50" height="80"/>
+            <rect class="map-building" x="400" y="640" width="36" height="60"/>
+            <rect class="map-building" x="280" y="700" width="60" height="60"/>
+            <rect class="map-building" x="370" y="730" width="60" height="40"/>
+
+            <rect class="map-building" x="480" y="640" width="60" height="60"/>
+            <rect class="map-building" x="550" y="640" width="40" height="40"/>
+            <rect class="map-building" x="600" y="640" width="20" height="120"/>
+            <rect class="map-building" x="480" y="710" width="40" height="50"/>
+            <rect class="map-building" x="540" y="690" width="50" height="60"/>
+
+            <rect class="map-building" x="660" y="640" width="40" height="50"/>
+            <rect class="map-building" x="710" y="640" width="40" height="60"/>
+            <rect class="map-building" x="660" y="700" width="80" height="60"/>
+
+            <rect class="map-building" x="80" y="820" width="50" height="40"/>
+            <rect class="map-building" x="140" y="820" width="40" height="60"/>
+            <rect class="map-building" x="190" y="825" width="44" height="50"/>
+
+            <rect class="map-building" x="280" y="820" width="40" height="40"/>
+            <rect class="map-building" x="330" y="820" width="50" height="60"/>
+            <rect class="map-building" x="390" y="820" width="40" height="40"/>
+            <rect class="map-building" x="280" y="870" width="80" height="30"/>
+
+            <rect class="map-building" x="480" y="820" width="60" height="50"/>
+            <rect class="map-building" x="550" y="820" width="60" height="40"/>
+            <rect class="map-building" x="480" y="880" width="50" height="30"/>
+            <rect class="map-building" x="540" y="870" width="70" height="40"/>
+
+            <!-- Polytechnic campus area -->
+            <rect class="map-building-campus" x="660" y="820" width="40" height="50"/>
+            <rect class="map-building-campus" x="710" y="820" width="40" height="80"/>
+            <rect class="map-building-campus" x="660" y="880" width="80" height="30"/>
+            <text class="map-area-label" x="660" y="815" font-size="9" letter-spacing="0">POLY CAMPUS</text>
+
+            <rect class="map-building" x="300" y="960" width="50" height="50"/>
+            <rect class="map-building" x="360" y="960" width="40" height="80"/>
+            <rect class="map-building" x="410" y="965" width="20" height="60"/>
+            <rect class="map-building" x="300" y="1020" width="80" height="40"/>
+
+            <rect class="map-building" x="480" y="960" width="40" height="60"/>
+            <rect class="map-building" x="530" y="960" width="50" height="40"/>
+            <rect class="map-building" x="590" y="960" width="20" height="80"/>
+            <rect class="map-building" x="480" y="1030" width="50" height="30"/>
+
+            <rect class="map-building" x="660" y="960" width="40" height="80"/>
+            <rect class="map-building" x="710" y="960" width="40" height="40"/>
+            <rect class="map-building" x="660" y="1050" width="80" height="40"/>
+          </g>
+
+          <!-- Streets: casing layer (darker outline) -->
+          <g class="map-street">
+            <!-- Major horizontals (casing) -->
+            <line class="map-street-major-casing" x1="0" y1="300" x2="800" y2="300"/>
+            <line class="map-street-major-casing" x1="0" y1="610" x2="800" y2="610"/>
+            <line class="map-street-major-casing" x1="0" y1="930" x2="800" y2="930"/>
+            <!-- Major verticals (casing) -->
+            <line class="map-street-major-casing" x1="250" y1="300" x2="250" y2="1200"/>
+            <line class="map-street-major-casing" x1="450" y1="300" x2="450" y2="1200"/>
+            <line class="map-street-major-casing" x1="630" y1="300" x2="630" y2="1200"/>
+          </g>
+          <g class="map-street">
+            <!-- Minor streets -->
+            <line class="map-street-minor" x1="0" y1="470" x2="800" y2="470"/>
+            <line class="map-street-minor" x1="0" y1="790" x2="800" y2="790"/>
+            <line class="map-street-minor" x1="50" y1="300" x2="50" y2="1200"/>
+            <line class="map-street-minor" x1="150" y1="610" x2="150" y2="1200"/>
+            <line class="map-street-minor" x1="350" y1="300" x2="350" y2="1200"/>
+            <line class="map-street-minor" x1="540" y1="300" x2="540" y2="1200"/>
+            <line class="map-street-minor" x1="730" y1="300" x2="730" y2="1200"/>
+
+            <!-- Major streets (white) -->
+            <line class="map-street-major" x1="0" y1="300" x2="800" y2="300"/>
+            <line class="map-street-major" x1="0" y1="610" x2="800" y2="610"/>
+            <line class="map-street-major" x1="0" y1="930" x2="800" y2="930"/>
+            <line class="map-street-major" x1="250" y1="300" x2="250" y2="1200"/>
+            <line class="map-street-major" x1="450" y1="300" x2="450" y2="1200"/>
+            <line class="map-street-major" x1="630" y1="300" x2="630" y2="1200"/>
+          </g>
+
+          <!-- Street labels -->
+          <text class="map-street-label" x="20" y="294">University Dr</text>
+          <text class="map-street-label" x="20" y="604">Apache Blvd</text>
+          <text class="map-street-label" x="20" y="924">Broadway Rd</text>
+          <text class="map-street-label" x="256" y="316" transform="rotate(-90 256 316)" style="transform-origin: 256px 316px">Mill Ave</text>
+          <text class="map-street-label" x="456" y="316" transform="rotate(-90 456 316)" style="transform-origin: 456px 316px">Forest Ave</text>
+          <text class="map-street-label" x="636" y="316" transform="rotate(-90 636 316)" style="transform-origin: 636px 316px">Rural Rd</text>
+
+          <!-- Bus routes (drawn along streets) -->
+          <!-- Tempe → Polytechnic (active, maroon) -->
+          <path class="map-route" stroke-width="7" d="M 250 980 L 250 610 L 450 610 L 450 470 L 630 470 L 630 820 L 730 820 L 730 980"/>
+          <path class="map-route map-route-active map-route-dash" d="M 250 980 L 250 610 L 450 610 L 450 470 L 540 470" />
+          <!-- Tempe → Downtown (blue) -->
+          <path class="map-route" stroke="var(--campus-downtown)" stroke-width="6" stroke-dasharray="2 0" d="M 250 980 L 250 790 L 50 790 L 50 470 L 250 470 L 250 300"/>
+          <!-- Tempe → West (green) -->
+          <path class="map-route" stroke="var(--campus-west)" stroke-width="6" stroke-opacity=".7" d="M 250 980 L 250 1100 L 50 1100"/>
+
+          <!-- Bus stop pin shadows -->
+          <circle cx="250" cy="980" r="14" fill="rgba(0,0,0,.12)"/>
+          <circle cx="450" cy="610" r="11" fill="rgba(0,0,0,.10)"/>
+          <circle cx="540" cy="470" r="11" fill="rgba(0,0,0,.10)"/>
+          <circle cx="630" cy="820" r="11" fill="rgba(0,0,0,.10)"/>
+          <circle cx="730" cy="980" r="11" fill="rgba(0,0,0,.10)"/>
         </svg>
-        <!-- Stops -->
-        <div class="map-pin" style="left:10%;top:91%">
+
+        <!-- Stops (positioned by % matching SVG coords / 800 / 1200) -->
+        <!-- Forest & Lemon = nearest, gold marker, near 250,980 -->
+        <button class="map-pin" style="left:31.25%;top:81.7%" onclick="openStopDetail('forest-lemon')">
           <div class="map-pin-dot gold" style="width:32px;height:32px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
           </div>
-        </div>
-        <div class="map-pin" style="left:46%;top:65%">
-          <div class="map-pin-dot">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"/></svg>
-          </div>
-        </div>
-        <div class="map-pin" style="left:90%;top:30%">
-          <div class="map-pin-dot">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 2 22h20z"/></svg>
-          </div>
-        </div>
+        </button>
+        <!-- University & Mill -->
+        <button class="map-pin" style="left:31.25%;top:25%" onclick="openStopDetail('university-mill')">
+          <div class="map-pin-dot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="6"/></svg></div>
+        </button>
+        <!-- Apache Blvd -->
+        <button class="map-pin" style="left:56.25%;top:50.8%" onclick="openStopDetail('apache')">
+          <div class="map-pin-dot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="6"/></svg></div>
+        </button>
+        <!-- Rural & Broadway -->
+        <button class="map-pin" style="left:78.75%;top:68.3%" onclick="openStopDetail('rural-broadway')">
+          <div class="map-pin-dot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="6"/></svg></div>
+        </button>
+        <!-- Polytechnic Campus -->
+        <button class="map-pin" style="left:91.25%;top:81.7%" onclick="openStopDetail('polytechnic')">
+          <div class="map-pin-dot"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 2 22h20z"/></svg></div>
+        </button>
+
         <!-- Bus marker (animated) -->
-        <div class="map-bus" id="busMarker" style="left:42%;top:70%">
+        <div class="map-bus" id="busMarker" style="left:31.25%;top:60%">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M4 11h16M7 17v2M17 17v2"/></svg>
         </div>
         <!-- User -->
-        <div class="map-user" style="left:14%;top:88%"></div>
+        <div class="map-user" style="left:25%;top:85%"></div>
       </div>
 
       <!-- Map controls -->
@@ -1036,12 +1260,23 @@
         <div class="sheet-handle" onclick="toggleSheet()"></div>
         <div class="sheet-header">
           <div class="sheet-title">
-            <span>Tempe → Polytechnic</span>
+            <span id="sheetStopName">Forest &amp; Lemon</span>
             <span class="pill pill-success">on time</span>
           </div>
-          <div class="sheet-sub">Bus #214 · Forest &amp; Lemon · 5 min away</div>
+          <div class="sheet-sub" id="sheetStopAddress">901 S Forest Ave, Tempe, AZ 85281</div>
+          <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap">
+            <button class="hero-btn" style="background:var(--ink-100); color:var(--ink-900); padding:9px 14px; font-size:13px" onclick="copyAddress()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span id="copyBtnLabel">Copy address</span>
+            </button>
+            <a class="hero-btn hero-btn-gold" style="padding:9px 14px; font-size:13px; text-decoration:none" id="gmapsLink" href="https://www.google.com/maps/dir/?api=1&destination=901+S+Forest+Ave+Tempe+AZ" target="_blank" rel="noopener">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8z"/></svg>
+              Directions
+            </a>
+          </div>
         </div>
         <div class="sheet-body">
+          <h3 class="section-title" style="padding:0; margin: 8px 0 8px">Routes serving this stop</h3>
           <div class="timeline">
             <div class="stop passed">
               <div class="stop-marker"></div>
@@ -1292,6 +1527,39 @@
 
   function toggleSheet() {
     document.getElementById('mapSheet').classList.toggle('collapsed');
+  }
+
+  const STOPS = {
+    'forest-lemon':    { name: 'Forest & Lemon',     address: '901 S Forest Ave, Tempe, AZ 85281' },
+    'university-mill': { name: 'University & Mill',  address: '525 S Mill Ave, Tempe, AZ 85281' },
+    'apache':          { name: 'Apache Blvd',        address: '1130 E Apache Blvd, Tempe, AZ 85281' },
+    'rural-broadway':  { name: 'Rural & Broadway',   address: '802 S Rural Rd, Tempe, AZ 85281' },
+    'polytechnic':     { name: 'Polytechnic Campus', address: '6049 S Backus Mall, Mesa, AZ 85212' }
+  };
+  function openStopDetail(id) {
+    const s = STOPS[id]; if (!s) return;
+    document.getElementById('sheetStopName').textContent = s.name;
+    document.getElementById('sheetStopAddress').textContent = s.address;
+    document.getElementById('gmapsLink').href = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(s.address);
+    document.getElementById('mapSheet').classList.remove('collapsed');
+    document.querySelectorAll('.map-pin').forEach(p => p.classList.remove('selected'));
+    const pins = document.querySelectorAll('#page-map .map-pin');
+    const idx = ['forest-lemon','university-mill','apache','rural-broadway','polytechnic'].indexOf(id);
+    if (pins[idx]) pins[idx].classList.add('selected');
+  }
+  function copyAddress() {
+    const addr = document.getElementById('sheetStopAddress').textContent;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(addr).then(() => {
+        const lbl = document.getElementById('copyBtnLabel');
+        const orig = 'Copy address';
+        lbl.textContent = '✓ Copied!';
+        toast('📋 Address copied to clipboard');
+        setTimeout(() => { lbl.textContent = orig; }, 2000);
+      });
+    } else {
+      toast('📋 ' + addr);
+    }
   }
 
   let notified = false;
