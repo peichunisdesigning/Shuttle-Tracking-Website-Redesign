@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
 <style>
   :root {
     --maroon-900: #4A0F22; --maroon-800: #6B1730; --maroon-700: #8C1D40;
@@ -1015,7 +1017,7 @@
   <!-- ─────────── MAP ─────────── -->
   <div class="page hidden" id="page-map" data-screen-label="02 Live Map">
     <div class="map-wrap">
-      <div class="map-canvas">
+      <div id="mapbox-map" class="map-canvas">
         <svg class="map-svg" viewBox="0 0 800 1200" preserveAspectRatio="none">
           <!-- Park / green areas -->
           <rect class="map-park" x="60" y="940" width="200" height="160" rx="6"/>
@@ -1529,6 +1531,8 @@
     document.getElementById('mapSheet').classList.toggle('collapsed');
   }
 
+  let map;
+  let mapMarkers = {};
   const STOPS = {
     'forest-lemon':    { name: 'Forest & Lemon',     address: '901 S Forest Ave, Tempe, AZ 85281' },
     'university-mill': { name: 'University & Mill',  address: '525 S Mill Ave, Tempe, AZ 85281' },
@@ -1542,10 +1546,9 @@
     document.getElementById('sheetStopAddress').textContent = s.address;
     document.getElementById('gmapsLink').href = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(s.address);
     document.getElementById('mapSheet').classList.remove('collapsed');
-    document.querySelectorAll('.map-pin').forEach(p => p.classList.remove('selected'));
-    const pins = document.querySelectorAll('#page-map .map-pin');
-    const idx = ['forest-lemon','university-mill','apache','rural-broadway','polytechnic'].indexOf(id);
-    if (pins[idx]) pins[idx].classList.add('selected');
+    Object.values(mapMarkers).forEach(el => el.classList.remove('selected'));
+    if (mapMarkers[id]) mapMarkers[id].classList.add('selected');
+    if (map && STOP_LNGLAT[id]) map.flyTo({ center: STOP_LNGLAT[id], zoom: 15, duration: 600 });
   }
   function copyAddress() {
     const addr = document.getElementById('sheetStopAddress').textContent;
@@ -1697,26 +1700,82 @@
   }
   renderSchedule();
 
-  // Animate bus marker along route
-  const busPath = [
-    { left: 42, top: 70 },
-    { left: 46, top: 65 },
-    { left: 52, top: 60 },
-    { left: 60, top: 53 },
-    { left: 68, top: 46 },
-    { left: 76, top: 40 },
-    { left: 82, top: 36 },
-    { left: 88, top: 32 }
-  ];
-  let busIdx = 0;
-  setInterval(() => {
-    busIdx = (busIdx + 1) % busPath.length;
-    const b = document.getElementById('busMarker');
-    if (b) {
-      b.style.left = busPath[busIdx].left + '%';
-      b.style.top = busPath[busIdx].top + '%';
-    }
-  }, 2000);
+  // ── Mapbox GL JS ──
+  mapboxgl.accessToken = 'pk.eyJ1Ijoia2ltYmVybHljaGVucXEiLCJhIjoiY21vdG56YnprMDB2MjJxcHhnemwyNDFiZSJ9.eTNCp4m9rcyam4XPoSgCgA';
+
+  const STOP_LNGLAT = {
+    'forest-lemon':    [-111.9372, 33.4175],
+    'university-mill': [-111.9400, 33.4225],
+    'apache':          [-111.9073, 33.4138],
+    'rural-broadway':  [-111.9270, 33.4047],
+    'polytechnic':     [-111.6756, 33.3054]
+  };
+
+  const mapContainer = document.getElementById('mapbox-map');
+  mapContainer.innerHTML = '';
+
+  map = new mapboxgl.Map({
+    container: 'mapbox-map',
+    style: 'mapbox://styles/kimberlychenqq/cmotczmr9000701r98hef51xd',
+    center: [-111.9281, 33.4242],
+    zoom: 13,
+    attributionControl: false
+  });
+
+  map.on('load', () => {
+    // Stop markers
+    Object.entries(STOP_LNGLAT).forEach(([id]) => {
+      const isMain = id === 'forest-lemon';
+      const el = document.createElement('button');
+      el.className = 'map-pin';
+      el.style.cssText = 'position:static;transform:none;';
+      el.innerHTML = isMain
+        ? `<div class="map-pin-dot gold" style="width:32px;height:32px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></div>`
+        : `<div class="map-pin-dot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="6"/></svg></div>`;
+      el.addEventListener('click', () => openStopDetail(id));
+      mapMarkers[id] = el;
+      new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+        .setLngLat(STOP_LNGLAT[id])
+        .addTo(map);
+    });
+
+    // Animated bus marker
+    const busEl = document.createElement('div');
+    busEl.id = 'busMarker';
+    busEl.className = 'map-bus';
+    busEl.style.cssText = 'position:static;transform:none;';
+    busEl.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M4 11h16M7 17v2M17 17v2"/></svg>`;
+
+    const busMapMarker = new mapboxgl.Marker({ element: busEl, anchor: 'center' })
+      .setLngLat([-111.9372, 33.4175])
+      .addTo(map);
+
+    const busRoute = [
+      [-111.9372, 33.4175],
+      [-111.9320, 33.4163],
+      [-111.9240, 33.4148],
+      [-111.9150, 33.4141],
+      [-111.9073, 33.4138]
+    ];
+    let busIdx = 0;
+    setInterval(() => {
+      busIdx = (busIdx + 1) % busRoute.length;
+      busMapMarker.setLngLat(busRoute[busIdx]);
+    }, 2000);
+  });
+
+  // Map control buttons
+  document.querySelector('.map-ctrl-btn[aria-label="Zoom in"]').onclick = () => map.zoomIn();
+  document.querySelector('.map-ctrl-btn[aria-label="Zoom out"]').onclick = () => map.zoomOut();
+  document.querySelector('.map-ctrl-btn[aria-label="Recenter"]').onclick = () => {
+    map.flyTo({ center: [-111.9281, 33.4242], zoom: 13 });
+    toast('📍 Centered on campus');
+  };
+
+  // Resize map when switching to map tab
+  document.querySelector('[data-tab="map"]').addEventListener('click', () => {
+    setTimeout(() => map.resize(), 100);
+  });
 </script>
 
 </body>
