@@ -441,20 +441,26 @@
       const { id, campus } = stop.properties;
       const isMain = id === 'forest-lemon';
       const color = stopColors[campus] || '#666';
+      const size = isMain ? 20 : 16;
 
+      // Wrapper: Mapbox sets its own translate on this element — never touch its transform
       const el = document.createElement('div');
-      el.style.cssText = `
-        width:${isMain ? 20 : 16}px;
-        height:${isMain ? 20 : 16}px;
+      el.style.cssText = `width:${size}px;height:${size}px;cursor:pointer;`;
+
+      // Inner circle: safe to scale on hover without breaking Mapbox positioning
+      const circle = document.createElement('div');
+      circle.style.cssText = `
+        width:100%;height:100%;
         background:${color};
         border:3px solid white;
         border-radius:50%;
         box-shadow:0 2px 6px rgba(0,0,0,0.25);
-        cursor:pointer;
         transition:transform .15s;
       `;
-      el.addEventListener('mouseenter', () => el.style.transform = 'scale(1.2)');
-      el.addEventListener('mouseleave', () => el.style.transform = 'scale(1)');
+      el.appendChild(circle);
+
+      el.addEventListener('mouseenter', () => { circle.style.transform = 'scale(1.3)'; });
+      el.addEventListener('mouseleave', () => { circle.style.transform = ''; });
       el.addEventListener('click', () => openStopDetail(id));
       mapMarkers[id] = el;
 
