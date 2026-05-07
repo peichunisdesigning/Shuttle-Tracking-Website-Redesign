@@ -254,6 +254,168 @@
   });
 
   map.on('load', () => {
+    // ===== 配色 =====
+    const campusColors = {
+      'Tempe Campus':            '#8C1D40',
+      'Polytechnic Campus':      '#C75B12',
+      'Downtown Phoenix Campus': '#1F6FB2',
+      'West Campus':             '#2E7D5B'
+    };
+    const stopColors = {
+      'Tempe':            '#8C1D40',
+      'Polytechnic':      '#C75B12',
+      'Downtown Phoenix': '#1F6FB2',
+      'West':             '#2E7D5B'
+    };
+
+    // ===== 1. GeoJSON 資料 =====
+    const campusData = {
+      "type": "FeatureCollection",
+      "features": [
+        // ── Campus Polygons ──
+        {
+          "type": "Feature",
+          "properties": { "name": "Tempe Campus" },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [[
+              [-111.9420, 33.4140], [-111.9420, 33.4275],
+              [-111.9230, 33.4275], [-111.9230, 33.4140],
+              [-111.9420, 33.4140]
+            ]]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": { "name": "Polytechnic Campus" },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [[
+              [-111.6860, 33.2985], [-111.6860, 33.3110],
+              [-111.6650, 33.3110], [-111.6650, 33.2985],
+              [-111.6860, 33.2985]
+            ]]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": { "name": "Downtown Phoenix Campus" },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [[
+              [-112.0790, 33.4480], [-112.0790, 33.4590],
+              [-112.0640, 33.4590], [-112.0640, 33.4480],
+              [-112.0790, 33.4480]
+            ]]
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": { "name": "West Campus" },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [[
+              [-112.1660, 33.6010], [-112.1660, 33.6130],
+              [-112.1430, 33.6130], [-112.1430, 33.6010],
+              [-112.1660, 33.6010]
+            ]]
+          }
+        },
+        // ── Stop Points ──
+        {
+          "type": "Feature",
+          "properties": { "name": "Forest & Lemon", "campus": "Tempe" },
+          "geometry": { "type": "Point", "coordinates": [-111.9372, 33.4175] }
+        },
+        {
+          "type": "Feature",
+          "properties": { "name": "Univ Dr & Rural Rd", "campus": "Tempe" },
+          "geometry": { "type": "Point", "coordinates": [-111.9269, 33.4229] }
+        },
+        {
+          "type": "Feature",
+          "properties": { "name": "Simulator Building", "campus": "Polytechnic" },
+          "geometry": { "type": "Point", "coordinates": [-111.6758, 33.3057] }
+        },
+        {
+          "type": "Feature",
+          "properties": { "name": "Parking Lot 37", "campus": "Polytechnic" },
+          "geometry": { "type": "Point", "coordinates": [-111.6741, 33.3042] }
+        },
+        {
+          "type": "Feature",
+          "properties": { "name": "Central Ave & Polk St", "campus": "Downtown Phoenix" },
+          "geometry": { "type": "Point", "coordinates": [-112.0740, 33.4483] }
+        },
+        {
+          "type": "Feature",
+          "properties": { "name": "University Way N", "campus": "Downtown Phoenix" },
+          "geometry": { "type": "Point", "coordinates": [-112.0700, 33.4538] }
+        },
+        {
+          "type": "Feature",
+          "properties": { "name": "University Way N", "campus": "West" },
+          "geometry": { "type": "Point", "coordinates": [-112.1539, 33.6064] }
+        }
+      ]
+    };
+
+    // ===== 2. 拆出 polygon 和 stops =====
+    const polygons = {
+      type: "FeatureCollection",
+      features: campusData.features.filter(f => f.geometry.type === "Polygon")
+    };
+    const geoStops = campusData.features.filter(f => f.geometry.type === "Point");
+
+    // ===== 3. 畫 campus 範圍 =====
+    map.addSource('campus', { type: 'geojson', data: polygons });
+
+    map.addLayer({
+      id: 'campus-fill',
+      type: 'fill',
+      source: 'campus',
+      paint: {
+        'fill-color': [
+          'match', ['get', 'name'],
+          'Tempe Campus',            '#8C1D40',
+          'Polytechnic Campus',      '#C75B12',
+          'Downtown Phoenix Campus', '#1F6FB2',
+          'West Campus',             '#2E7D5B',
+          '#999999'
+        ],
+        'fill-opacity': 0.12
+      }
+    });
+
+    map.addLayer({
+      id: 'campus-outline',
+      type: 'line',
+      source: 'campus',
+      paint: {
+        'line-color': [
+          'match', ['get', 'name'],
+          'Tempe Campus',            '#8C1D40',
+          'Polytechnic Campus',      '#C75B12',
+          'Downtown Phoenix Campus', '#1F6FB2',
+          'West Campus',             '#2E7D5B',
+          '#999999'
+        ],
+        'line-width': 1.5,
+        'line-opacity': 0.5
+      }
+    });
+
+    // ===== 4. 加站牌 pin（顏色根據 campus 變化）=====
+    geoStops.forEach(stop => {
+      const color = stopColors[stop.properties.campus] || '#666';
+      const el = document.createElement('div');
+      el.style.cssText = `width:16px;height:16px;background:${color};border:3px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.2);cursor:pointer;`;
+      new mapboxgl.Marker(el)
+        .setLngLat(stop.geometry.coordinates)
+        .setPopup(new mapboxgl.Popup({ offset: 12 }).setHTML(`<strong>${stop.properties.name}</strong>`))
+        .addTo(map);
+    });
+
     // Stop markers
     Object.entries(STOP_LNGLAT).forEach(([id]) => {
       const isMain = id === 'forest-lemon';
