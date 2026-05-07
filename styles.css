@@ -42,10 +42,10 @@
 
   /* ───── Top header ───── */
   .header {
-    height: var(--header-h);
+    height: calc(var(--header-h) + env(safe-area-inset-top));
     background: var(--maroon-700);
     color: #fff;
-    padding: 0 16px;
+    padding: env(safe-area-inset-top) 16px 0;
     display: flex; align-items: center; gap: 12px;
     position: sticky; top: 0; z-index: 40;
     box-shadow: 0 2px 8px rgba(0,0,0,.08);
@@ -799,8 +799,8 @@
   /* ───── Desktop progressive enhancement ───── */
   @media (min-width: 768px) {
     .header {
-      height: var(--header-h-desktop);
-      padding: 0 32px;
+      height: calc(var(--header-h-desktop) + env(safe-area-inset-top));
+      padding: env(safe-area-inset-top) 32px 0;
       gap: 24px;
     }
     .header-back { display: none !important; }
