@@ -143,12 +143,13 @@
     if (body && sched) {
       const routeIdByName = Object.fromEntries(Object.entries(ROUTE_TITLES).map(([k,v]) => [v, k]));
       const rows = sched.routes.map(r => {
+        const rid = routeIdByName[r.name];
         const nextTime = r.times.find(t => timeToMin(t) >= NOW_MIN);
         const diff = nextTime ? timeToMin(nextTime) - NOW_MIN : null;
         const arrival = diff === null ? '—' : diff === 0 ? 'Now' : `${diff} min`;
         const arrivalSub = diff === null ? 'no more today' : diff === 0 ? 'arriving' : 'away';
-        const busNum = ROUTE_BUS[routeIdByName[r.name]] || '—';
-        return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--ink-100)">
+        const busNum = ROUTE_BUS[rid] || '—';
+        return `<div onclick="goRoute('${rid}')" style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--ink-100);cursor:pointer;-webkit-tap-highlight-color:transparent">
           <span style="width:11px;height:11px;border-radius:50%;background:${r.color};flex-shrink:0"></span>
           <div style="flex:1;min-width:0">
             <div style="font-size:13px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name}</div>
@@ -158,26 +159,16 @@
             <div style="font-size:16px;font-weight:700;color:${diff === 0 ? 'var(--campus-tempe)' : 'var(--ink-900)'}">${arrival}</div>
             <div style="font-size:10px;color:var(--ink-500)">${arrivalSub}</div>
           </div>
+          <svg style="flex-shrink:0;color:var(--ink-300)" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </div>`;
-      }).join('');
-      const seeRouteButtons = sched.routes.map(r => {
-        const rid = routeIdByName[r.name];
-        const label = sched.routes.length > 1 ? `See Route · ${r.name}` : 'See Route';
-        return `<button class="notify-cta" style="background:var(--ink-100);color:var(--ink-900)" onclick="goRoute('${rid}')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="2"/><path d="M4 11h16M7 17v2M17 17v2"/></svg>
-          ${label}
-        </button>`;
       }).join('');
       body.innerHTML = `
         <h3 class="section-title" style="padding:0;margin:8px 0 4px">Routes serving this stop</h3>
         <div style="margin-bottom:14px">${rows}</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          ${seeRouteButtons}
-          <button class="notify-cta" onclick="toast('🔔 You will be notified 5 min before arrival')">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9zM10 21a2 2 0 0 0 4 0"/></svg>
-            Notify 5 min before arrival
-          </button>
-        </div>`;
+        <button class="notify-cta" onclick="toast('🔔 You will be notified 5 min before arrival')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9zM10 21a2 2 0 0 0 4 0"/></svg>
+          Notify 5 min before arrival
+        </button>`;
     }
 
     const sheet = document.getElementById('mapSheet');
