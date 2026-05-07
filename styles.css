@@ -796,6 +796,14 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
+  /* ───── Mobile header: prevent overflow on narrow screens ───── */
+  @media (max-width: 767px) {
+    .header { gap: 6px; padding-left: 12px; padding-right: 12px; }
+    .last-updated { display: none; }
+    .primary-switch-btn { padding: 6px 10px; }
+    .primary-switch-btn svg { display: none; }
+  }
+
   /* ───── Desktop progressive enhancement ───── */
   @media (min-width: 768px) {
     .header {
