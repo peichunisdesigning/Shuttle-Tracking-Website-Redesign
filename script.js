@@ -37,6 +37,7 @@
   };
   let currentTab = 'home';
   let lastTab = 'home';
+  let currentRouteId = null;
 
   function goTab(tab) {
     document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
@@ -68,7 +69,7 @@
 
     document.getElementById('etaNum').textContent = nextDeptMin - NOW_MIN;
     document.getElementById('etaStop').textContent = STOPS[firstId]?.name || '';
-    document.getElementById('etaBus').textContent = 'Bus #' + (ROUTE_BUS[id] || '—');
+    document.getElementById('etaBus').textContent = 'Shuttle #' + (ROUTE_BUS[id] || '—');
 
     const tl = document.getElementById('routeTimeline');
     if (tl) {
@@ -83,6 +84,7 @@
       }).join('');
     }
 
+    currentRouteId = id;
     document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
     document.getElementById('page-route-detail').classList.remove('hidden');
     document.getElementById('headerTitle').textContent = ROUTE_TITLES[id] || 'Route';
@@ -91,6 +93,17 @@
     document.querySelectorAll('.primary-switch-btn, .more-item').forEach(t => t.classList.remove('active'));
     currentTab = 'route-detail';
     window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+
+  function viewOnMap() {
+    const stops = ROUTE_STOPS[currentRouteId];
+    if (!stops || !stops[0]) return;
+    const firstStopId = stops[0].id;
+    goTab('map');
+    setTimeout(() => {
+      if (map) map.resize();
+      openStopDetail(firstStopId);
+    }, 150);
   }
 
   document.getElementById('backBtn').addEventListener('click', () => goTab(lastTab));
@@ -139,7 +152,7 @@
           <span style="width:11px;height:11px;border-radius:50%;background:${r.color};flex-shrink:0"></span>
           <div style="flex:1;min-width:0">
             <div style="font-size:13px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name}</div>
-            <div style="font-size:11px;color:var(--ink-500)">${r.interval} · Bus #${busNum}</div>
+            <div style="font-size:11px;color:var(--ink-500)">${r.interval} · Shuttle #${busNum}</div>
           </div>
           <div style="text-align:right;flex-shrink:0">
             <div style="font-size:16px;font-weight:700;color:${diff === 0 ? 'var(--campus-tempe)' : 'var(--ink-900)'}">${arrival}</div>
@@ -567,7 +580,7 @@
       const t = getComputedStyle(sheet).transform;
       return t === 'none' ? 0 : new DOMMatrix(t).m42;
     }
-    function maxTY() { return sheet.offsetHeight - 120; }
+    function maxTY() { return sheet.offsetHeight; }
 
     function onStart(y) {
       active = true; dragged = false;

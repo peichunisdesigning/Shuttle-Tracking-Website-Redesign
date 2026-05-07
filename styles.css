@@ -543,7 +543,7 @@
     overflow: hidden;
     display: flex; flex-direction: column;
   }
-  .sheet.collapsed { transform: translateY(calc(100% - 120px)); }
+  .sheet.collapsed { transform: translateY(100%); }
   .sheet-handle {
     display: flex; justify-content: center; padding: 8px;
     cursor: pointer;
