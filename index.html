@@ -433,7 +433,7 @@
 
       <!-- Bottom sheet -->
       <div class="sheet collapsed" id="mapSheet">
-        <div class="sheet-handle" onclick="toggleSheet()"></div>
+        <div class="sheet-handle"></div>
         <div class="sheet-header">
           <div class="sheet-title">
             <span id="sheetStopName">Forest &amp; Lemon</span>
@@ -451,35 +451,7 @@
             </a>
           </div>
         </div>
-        <div class="sheet-body">
-          <h3 class="section-title" style="padding:0; margin: 8px 0 8px">Routes serving this stop</h3>
-          <div class="timeline">
-            <div class="stop current">
-              <div class="stop-marker"></div>
-              <div class="stop-name">Forest &amp; Lemon</div>
-              <div class="stop-time">8:55</div>
-            </div>
-            <div class="stop">
-              <div class="stop-marker"></div>
-              <div class="stop-name">Univ Dr &amp; Rural Rd</div>
-              <div class="stop-time">9:00</div>
-            </div>
-            <div class="stop">
-              <div class="stop-marker"></div>
-              <div class="stop-name">Simulator Building</div>
-              <div class="stop-time">9:15</div>
-            </div>
-            <div class="stop">
-              <div class="stop-marker"></div>
-              <div class="stop-name">Parking Lot 37</div>
-              <div class="stop-time">9:25</div>
-            </div>
-          </div>
-          <button class="notify-cta" style="margin-top:12px" onclick="toast('🔔 You will be notified 5 min before arrival')">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9zM10 21a2 2 0 0 0 4 0"/></svg>
-            Notify 5 min before arrival
-          </button>
-        </div>
+        <div class="sheet-body" id="mapSheetBody"></div>
       </div>
     </div>
   </div>

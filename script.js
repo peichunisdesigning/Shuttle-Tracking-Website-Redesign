@@ -68,7 +68,37 @@
     document.getElementById('sheetStopName').textContent = s.name;
     document.getElementById('sheetStopAddress').textContent = s.address;
     document.getElementById('gmapsLink').href = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(s.address);
-    document.getElementById('mapSheet').classList.remove('collapsed');
+
+    const sched = STOP_SCHEDULES[id];
+    const body = document.getElementById('mapSheetBody');
+    if (body && sched) {
+      const rows = sched.routes.map(r => {
+        const next = r.times.find(t => timeToMin(t) >= NOW_MIN) || '—';
+        return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--ink-100)">
+          <span style="width:11px;height:11px;border-radius:50%;background:${r.color};flex-shrink:0"></span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name}</div>
+            <div style="font-size:11px;color:var(--ink-500)">${r.interval}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:16px;font-weight:700;color:var(--ink-900)">${next}</div>
+            <div style="font-size:10px;color:var(--ink-500)">next</div>
+          </div>
+        </div>`;
+      }).join('');
+      body.innerHTML = `
+        <h3 class="section-title" style="padding:0;margin:8px 0 4px">Routes serving this stop</h3>
+        <div style="margin-bottom:14px">${rows}</div>
+        <button class="notify-cta" onclick="toast('🔔 You will be notified 5 min before arrival')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9zM10 21a2 2 0 0 0 4 0"/></svg>
+          Notify 5 min before arrival
+        </button>`;
+    }
+
+    const sheet = document.getElementById('mapSheet');
+    sheet.style.transition = '';
+    sheet.style.transform = '';
+    sheet.classList.remove('collapsed');
     Object.values(mapMarkers).forEach(el => el.classList.remove('selected'));
     if (mapMarkers[id]) mapMarkers[id].classList.add('selected');
     if (map && STOP_LNGLAT[id]) map.flyTo({ center: STOP_LNGLAT[id], zoom: 15, duration: 600 });
@@ -470,3 +500,74 @@
   document.querySelector('[data-tab="map"]').addEventListener('click', () => {
     setTimeout(() => map.resize(), 100);
   });
+
+  // ── Bottom sheet drag-to-open/close ──
+  function initSheetDrag() {
+    const sheet = document.getElementById('mapSheet');
+    const handle = sheet.querySelector('.sheet-handle');
+    let startY = 0, startTY = 0, lastY = 0, lastTime = 0, vel = 0, active = false, dragged = false;
+
+    function getTY() {
+      const t = getComputedStyle(sheet).transform;
+      return t === 'none' ? 0 : new DOMMatrix(t).m42;
+    }
+    function maxTY() { return sheet.offsetHeight - 120; }
+
+    function onStart(y) {
+      active = true; dragged = false;
+      startY = lastY = y; lastTime = Date.now(); vel = 0;
+      startTY = getTY();
+      sheet.style.transition = 'none';
+    }
+    function onMove(y) {
+      if (!active) return;
+      const now = Date.now(), dt = now - lastTime;
+      if (dt > 0) vel = (y - lastY) / dt;
+      lastY = y; lastTime = now;
+      if (Math.abs(y - startY) > 6) dragged = true;
+      const clamped = Math.max(0, Math.min(maxTY(), startTY + (y - startY)));
+      sheet.style.transform = `translateY(${clamped}px)`;
+    }
+    function onEnd() {
+      if (!active) return;
+      active = false;
+      if (!dragged) {
+        sheet.style.transition = '';
+        sheet.style.transform = '';
+        return; // click event will fire toggleSheet
+      }
+      const cur = getTY(), mid = maxTY() * 0.45;
+      const collapse = vel > 0.4 || (vel > -0.4 && cur > mid);
+      // Lock current px, force reflow, then animate to target
+      sheet.style.transition = 'none';
+      sheet.style.transform = `translateY(${cur}px)`;
+      sheet.offsetHeight;
+      sheet.style.transition = 'transform .3s cubic-bezier(.2,.8,.2,1)';
+      sheet.style.transform = `translateY(${collapse ? maxTY() : 0}px)`;
+      sheet.addEventListener('transitionend', function h() {
+        sheet.removeEventListener('transitionend', h);
+        sheet.classList.toggle('collapsed', collapse);
+        sheet.style.transition = '';
+        sheet.style.transform = '';
+      }, { once: true });
+    }
+
+    // Tap toggles (only when no real drag)
+    handle.addEventListener('click', () => { if (!dragged) toggleSheet(); });
+
+    // Touch
+    handle.addEventListener('touchstart', e => onStart(e.touches[0].clientY), { passive: true });
+    handle.addEventListener('touchmove', e => { e.preventDefault(); onMove(e.touches[0].clientY); }, { passive: false });
+    handle.addEventListener('touchend', () => onEnd());
+    handle.addEventListener('touchcancel', () => { active = false; sheet.style.transition = ''; sheet.style.transform = ''; });
+
+    // Mouse (desktop)
+    handle.addEventListener('mousedown', e => {
+      onStart(e.clientY); e.preventDefault();
+      const mm = ev => onMove(ev.clientY);
+      const mu = () => { onEnd(); document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); };
+      document.addEventListener('mousemove', mm);
+      document.addEventListener('mouseup', mu);
+    });
+  }
+  initSheetDrag();
