@@ -325,37 +325,37 @@
         // ── Stop Points ──
         {
           "type": "Feature",
-          "properties": { "name": "Forest & Lemon", "campus": "Tempe" },
+          "properties": { "id": "forest-lemon",   "name": "Forest & Lemon",         "campus": "Tempe" },
           "geometry": { "type": "Point", "coordinates": [-111.9372, 33.4175] }
         },
         {
           "type": "Feature",
-          "properties": { "name": "Univ Dr & Rural Rd", "campus": "Tempe" },
+          "properties": { "id": "univ-rural",      "name": "Univ Dr & Rural Rd",      "campus": "Tempe" },
           "geometry": { "type": "Point", "coordinates": [-111.9269, 33.4229] }
         },
         {
           "type": "Feature",
-          "properties": { "name": "Simulator Building", "campus": "Polytechnic" },
+          "properties": { "id": "simulator",       "name": "Simulator Building",       "campus": "Polytechnic" },
           "geometry": { "type": "Point", "coordinates": [-111.6758, 33.3057] }
         },
         {
           "type": "Feature",
-          "properties": { "name": "Parking Lot 37", "campus": "Polytechnic" },
+          "properties": { "id": "parking-lot-37",  "name": "Parking Lot 37",           "campus": "Polytechnic" },
           "geometry": { "type": "Point", "coordinates": [-111.6741, 33.3042] }
         },
         {
           "type": "Feature",
-          "properties": { "name": "Central Ave & Polk St", "campus": "Downtown Phoenix" },
+          "properties": { "id": "central-polk",    "name": "Central Ave & Polk St",    "campus": "Downtown Phoenix" },
           "geometry": { "type": "Point", "coordinates": [-112.0740, 33.4483] }
         },
         {
           "type": "Feature",
-          "properties": { "name": "University Way N", "campus": "Downtown Phoenix" },
+          "properties": { "id": "univ-way-n",      "name": "University Way N",          "campus": "Downtown Phoenix" },
           "geometry": { "type": "Point", "coordinates": [-112.0700, 33.4538] }
         },
         {
           "type": "Feature",
-          "properties": { "name": "University Way N", "campus": "West" },
+          "properties": { "id": "univ-way-west",   "name": "University Way N",          "campus": "West" },
           "geometry": { "type": "Point", "coordinates": [-112.1539, 33.6064] }
         }
       ]
@@ -406,30 +406,30 @@
       }
     });
 
-    // ===== 4. 加站牌 pin（顏色根據 campus 變化）=====
+    // ===== 4. 加站牌 pin（顏色根據 campus，點擊開啟底部 sheet）=====
     geoStops.forEach(stop => {
-      const color = stopColors[stop.properties.campus] || '#666';
-      const el = document.createElement('div');
-      el.style.cssText = `width:16px;height:16px;background:${color};border:3px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.2);cursor:pointer;`;
-      new mapboxgl.Marker(el)
-        .setLngLat(stop.geometry.coordinates)
-        .setPopup(new mapboxgl.Popup({ offset: 12 }).setHTML(`<strong>${stop.properties.name}</strong>`))
-        .addTo(map);
-    });
-
-    // Stop markers
-    Object.entries(STOP_LNGLAT).forEach(([id]) => {
+      const { id, campus } = stop.properties;
       const isMain = id === 'forest-lemon';
-      const el = document.createElement('button');
-      el.className = 'map-pin';
-      el.style.cssText = 'position:static;transform:none;';
-      el.innerHTML = isMain
-        ? `<div class="map-pin-dot gold" style="width:32px;height:32px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></div>`
-        : `<div class="map-pin-dot"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="6"/></svg></div>`;
+      const color = stopColors[campus] || '#666';
+
+      const el = document.createElement('div');
+      el.style.cssText = `
+        width:${isMain ? 20 : 16}px;
+        height:${isMain ? 20 : 16}px;
+        background:${color};
+        border:3px solid white;
+        border-radius:50%;
+        box-shadow:0 2px 6px rgba(0,0,0,0.25);
+        cursor:pointer;
+        transition:transform .15s;
+      `;
+      el.addEventListener('mouseenter', () => el.style.transform = 'scale(1.2)');
+      el.addEventListener('mouseleave', () => el.style.transform = 'scale(1)');
       el.addEventListener('click', () => openStopDetail(id));
       mapMarkers[id] = el;
-      new mapboxgl.Marker({ element: el, anchor: 'bottom' })
-        .setLngLat(STOP_LNGLAT[id])
+
+      new mapboxgl.Marker({ element: el, anchor: 'center' })
+        .setLngLat(stop.geometry.coordinates)
         .addTo(map);
     });
 
