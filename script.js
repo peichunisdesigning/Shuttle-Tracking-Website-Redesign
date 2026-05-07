@@ -11,6 +11,12 @@
     'tempe-west': 'Tempe ⇄ West'
   };
 
+  const ROUTE_BUS = {
+    'tempe-poly':      '1723',
+    'tempe-downtown':  '1456',
+    'tempe-west':      '1891'
+  };
+
   // offset = minutes from first-stop departure (10 min same campus, 30 min cross-campus)
   const ROUTE_STOPS = {
     'tempe-poly': [
@@ -62,6 +68,7 @@
 
     document.getElementById('etaNum').textContent = nextDeptMin - NOW_MIN;
     document.getElementById('etaStop').textContent = STOPS[firstId]?.name || '';
+    document.getElementById('etaBus').textContent = 'Bus #' + (ROUTE_BUS[id] || '—');
 
     const tl = document.getElementById('routeTimeline');
     if (tl) {
@@ -121,16 +128,18 @@
     const sched = STOP_SCHEDULES[id];
     const body = document.getElementById('mapSheetBody');
     if (body && sched) {
+      const routeIdByName = Object.fromEntries(Object.entries(ROUTE_TITLES).map(([k,v]) => [v, k]));
       const rows = sched.routes.map(r => {
         const nextTime = r.times.find(t => timeToMin(t) >= NOW_MIN);
         const diff = nextTime ? timeToMin(nextTime) - NOW_MIN : null;
         const arrival = diff === null ? '—' : diff === 0 ? 'Now' : `${diff} min`;
         const arrivalSub = diff === null ? 'no more today' : diff === 0 ? 'arriving' : 'away';
+        const busNum = ROUTE_BUS[routeIdByName[r.name]] || '—';
         return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--ink-100)">
           <span style="width:11px;height:11px;border-radius:50%;background:${r.color};flex-shrink:0"></span>
           <div style="flex:1;min-width:0">
             <div style="font-size:13px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name}</div>
-            <div style="font-size:11px;color:var(--ink-500)">${r.interval}</div>
+            <div style="font-size:11px;color:var(--ink-500)">${r.interval} · Bus #${busNum}</div>
           </div>
           <div style="text-align:right;flex-shrink:0">
             <div style="font-size:16px;font-weight:700;color:${diff === 0 ? 'var(--campus-tempe)' : 'var(--ink-900)'}">${arrival}</div>
