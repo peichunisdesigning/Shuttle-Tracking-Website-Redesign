@@ -10,6 +10,25 @@
     'tempe-downtown': 'Tempe ⇄ Downtown',
     'tempe-west': 'Tempe ⇄ West'
   };
+
+  // offset = minutes from first-stop departure (10 min same campus, 30 min cross-campus)
+  const ROUTE_STOPS = {
+    'tempe-poly': [
+      { id: 'forest-lemon',   offset: 0  },
+      { id: 'univ-rural',     offset: 10 },
+      { id: 'simulator',      offset: 40 },
+      { id: 'parking-lot-37', offset: 50 }
+    ],
+    'tempe-downtown': [
+      { id: 'forest-lemon',  offset: 0  },
+      { id: 'central-polk',  offset: 30 }
+    ],
+    'tempe-west': [
+      { id: 'forest-lemon',  offset: 0  },
+      { id: 'central-polk',  offset: 30 },
+      { id: 'univ-way-west', offset: 60 }
+    ]
+  };
   let currentTab = 'home';
   let lastTab = 'home';
 
@@ -26,6 +45,37 @@
   }
 
   function goRoute(id) {
+    const stops = ROUTE_STOPS[id] || [];
+    const firstId = stops[0]?.id;
+
+    // Find next departure from the first stop on this specific route
+    let nextDeptMin = NOW_MIN + 5;
+    if (firstId && STOP_SCHEDULES[firstId]) {
+      const routeName = ROUTE_TITLES[id];
+      for (const r of STOP_SCHEDULES[firstId].routes) {
+        if (r.name === routeName) {
+          const t = r.times.find(t => timeToMin(t) >= NOW_MIN);
+          if (t) { nextDeptMin = timeToMin(t); break; }
+        }
+      }
+    }
+
+    document.getElementById('etaNum').textContent = nextDeptMin - NOW_MIN;
+    document.getElementById('etaStop').textContent = STOPS[firstId]?.name || '';
+
+    const tl = document.getElementById('routeTimeline');
+    if (tl) {
+      tl.innerHTML = stops.map((s, i) => {
+        const min = nextDeptMin + s.offset;
+        const timeStr = `${Math.floor(min / 60)}:${String(min % 60).padStart(2, '0')}`;
+        return `<div class="stop${i === 0 ? ' current' : ''}">
+          <div class="stop-marker"></div>
+          <div class="stop-name">${STOPS[s.id]?.name || s.id}</div>
+          <div class="stop-time">${timeStr}</div>
+        </div>`;
+      }).join('');
+    }
+
     document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
     document.getElementById('page-route-detail').classList.remove('hidden');
     document.getElementById('headerTitle').textContent = ROUTE_TITLES[id] || 'Route';
@@ -60,7 +110,6 @@
     'simulator':      { name: 'Simulator Building',        address: 'Simulator Building, Mesa, AZ 85212' },
     'parking-lot-37': { name: 'Parking Lot 37',           address: 'Parking Lot 37, Mesa, AZ 85212' },
     'central-polk':   { name: 'Central Ave & Polk St',    address: 'Central Ave & Polk St, Phoenix, AZ 85004' },
-    'univ-way-n':     { name: 'University Way N',          address: 'University Way N, Phoenix, AZ 85004' },
     'univ-way-west':  { name: 'University Way N',          address: 'University Way N, Glendale, AZ 85306' }
   };
   function openStopDetail(id) {
@@ -73,7 +122,10 @@
     const body = document.getElementById('mapSheetBody');
     if (body && sched) {
       const rows = sched.routes.map(r => {
-        const next = r.times.find(t => timeToMin(t) >= NOW_MIN) || '—';
+        const nextTime = r.times.find(t => timeToMin(t) >= NOW_MIN);
+        const diff = nextTime ? timeToMin(nextTime) - NOW_MIN : null;
+        const arrival = diff === null ? '—' : diff === 0 ? 'Now' : `${diff} min`;
+        const arrivalSub = diff === null ? 'no more today' : diff === 0 ? 'arriving' : 'away';
         return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--ink-100)">
           <span style="width:11px;height:11px;border-radius:50%;background:${r.color};flex-shrink:0"></span>
           <div style="flex:1;min-width:0">
@@ -81,8 +133,8 @@
             <div style="font-size:11px;color:var(--ink-500)">${r.interval}</div>
           </div>
           <div style="text-align:right;flex-shrink:0">
-            <div style="font-size:16px;font-weight:700;color:var(--ink-900)">${next}</div>
-            <div style="font-size:10px;color:var(--ink-500)">next</div>
+            <div style="font-size:16px;font-weight:700;color:${diff === 0 ? 'var(--campus-tempe)' : 'var(--ink-900)'}">${arrival}</div>
+            <div style="font-size:10px;color:var(--ink-500)">${arrivalSub}</div>
           </div>
         </div>`;
       }).join('');
@@ -203,14 +255,9 @@
       name: 'Central Ave & Polk St',
       routes: [
         { name: 'Tempe ⇄ Downtown', color: 'var(--campus-downtown)', interval: 'Every 15 min',
-          times: ['7:20','7:35','7:50','8:05','8:20','8:35','8:50','9:05','9:20','9:35','9:50','10:05','10:20'] }
-      ]
-    },
-    'univ-way-n': {
-      name: 'University Way N (Downtown)',
-      routes: [
-        { name: 'Tempe ⇄ Downtown', color: 'var(--campus-downtown)', interval: 'Every 15 min',
-          times: ['7:30','7:45','8:00','8:15','8:30','8:45','9:00','9:15','9:30','9:45','10:00','10:15','10:30'] }
+          times: ['7:20','7:35','7:50','8:05','8:20','8:35','8:50','9:05','9:20','9:35','9:50','10:05','10:20'] },
+        { name: 'Tempe ⇄ West', color: 'var(--campus-west)', interval: 'Every 15 min',
+          times: ['7:25','7:40','7:55','8:10','8:25','8:40','8:55','9:10','9:25','9:40','9:55','10:10','10:25'] }
       ]
     },
     'univ-way-west': {
@@ -268,7 +315,6 @@
     'simulator':      [-111.6758, 33.3057],
     'parking-lot-37': [-111.6741, 33.3042],
     'central-polk':   [-112.0740, 33.4483],
-    'univ-way-n':     [-112.0700, 33.4538],
     'univ-way-west':  [-112.1539, 33.6064]
   };
 
@@ -377,11 +423,6 @@
           "type": "Feature",
           "properties": { "id": "central-polk",    "name": "Central Ave & Polk St",    "campus": "Downtown Phoenix" },
           "geometry": { "type": "Point", "coordinates": [-112.0740, 33.4483] }
-        },
-        {
-          "type": "Feature",
-          "properties": { "id": "univ-way-n",      "name": "University Way N",          "campus": "Downtown Phoenix" },
-          "geometry": { "type": "Point", "coordinates": [-112.0700, 33.4538] }
         },
         {
           "type": "Feature",
