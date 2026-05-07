@@ -254,18 +254,19 @@
   });
 
   map.on('load', () => {
-    // ===== 配色 =====
+    // ===== 配色（從 CSS 變數讀取）=====
+    const root = getComputedStyle(document.documentElement);
     const campusColors = {
-      'Tempe Campus':            '#8C1D40',
-      'Polytechnic Campus':      '#C75B12',
-      'Downtown Phoenix Campus': '#1F6FB2',
-      'West Campus':             '#2E7D5B'
+      'Tempe Campus':            root.getPropertyValue('--campus-tempe').trim(),
+      'Polytechnic Campus':      root.getPropertyValue('--campus-poly').trim(),
+      'Downtown Phoenix Campus': root.getPropertyValue('--campus-downtown').trim(),
+      'West Campus':             root.getPropertyValue('--campus-west').trim()
     };
     const stopColors = {
-      'Tempe':            '#8C1D40',
-      'Polytechnic':      '#C75B12',
-      'Downtown Phoenix': '#1F6FB2',
-      'West':             '#2E7D5B'
+      'Tempe':            root.getPropertyValue('--campus-tempe').trim(),
+      'Polytechnic':      root.getPropertyValue('--campus-poly').trim(),
+      'Downtown Phoenix': root.getPropertyValue('--campus-downtown').trim(),
+      'West':             root.getPropertyValue('--campus-west').trim()
     };
 
     // ===== 1. GeoJSON 資料 =====
@@ -377,10 +378,10 @@
       paint: {
         'fill-color': [
           'match', ['get', 'name'],
-          'Tempe Campus',            '#8C1D40',
-          'Polytechnic Campus',      '#C75B12',
-          'Downtown Phoenix Campus', '#1F6FB2',
-          'West Campus',             '#2E7D5B',
+          'Tempe Campus',            campusColors['Tempe Campus'],
+          'Polytechnic Campus',      campusColors['Polytechnic Campus'],
+          'Downtown Phoenix Campus', campusColors['Downtown Phoenix Campus'],
+          'West Campus',             campusColors['West Campus'],
           '#999999'
         ],
         'fill-opacity': 0.12
@@ -394,10 +395,10 @@
       paint: {
         'line-color': [
           'match', ['get', 'name'],
-          'Tempe Campus',            '#8C1D40',
-          'Polytechnic Campus',      '#C75B12',
-          'Downtown Phoenix Campus', '#1F6FB2',
-          'West Campus',             '#2E7D5B',
+          'Tempe Campus',            campusColors['Tempe Campus'],
+          'Polytechnic Campus',      campusColors['Polytechnic Campus'],
+          'Downtown Phoenix Campus', campusColors['Downtown Phoenix Campus'],
+          'West Campus',             campusColors['West Campus'],
           '#999999'
         ],
         'line-width': 1.5,
